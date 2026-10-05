@@ -1,0 +1,37 @@
+.input {
+  position: relative;
+  &__input{
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    border: none;
+    line-height: 1.5;
+    max-height: calc(1.5em * 15);
+    &::-webkit-scrollbar {
+      width: 5px;
+    }
+    &::-webkit-scrollbar-track{
+      background: transparent;
+      cursor: default;
+    }
+    &::-webkit-scrollbar-thumb{
+      background-color: rgba(255, 255, 255, .25);
+      border-radius: 3px;
+      cursor: default;
+    }
+    &::-webkit-scrollbar-thumb:hover{
+      background-color: rgba(255, 255, 255, .4);
+    }
+  }
+  &__placeholder{
+    position: absolute;
+    z-index: 2;
+    pointer-events: none;
+    left: 0;
+    top: 0;
+    line-height: 1.5;
+    letter-spacing: 1px;
+    color: rgba(255, 255, 255, 1)
+  }
+}

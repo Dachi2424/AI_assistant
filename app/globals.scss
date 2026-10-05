@@ -1,0 +1,31 @@
+
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  color: white;
+}
+
+input, select, option, textarea, button{
+  color: white;
+  font-size: 16px;
+}
+
+input, select, option, textarea{
+  background-color: transparent;
+  outline: none;
+}
+
+textarea{
+resize: none;
+}
+
+:root{
+  --color-primary: rgb(91, 75, 223);
+  --color-secondary: rgb(27, 35, 47);
+}
+
+body{
+  background-color: var(--color-secondary);
+}

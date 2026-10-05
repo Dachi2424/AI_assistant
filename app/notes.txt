@@ -1,0 +1,4 @@
+10/5/2026 - i made the basic design for textarea, created backend logic for getting and 
+storing user data, created a chat context to store all the user messages and i will display
+them in UI tomorrow. i also linked frontend with backend's auth google system. I will also 
+make "new chat" button functional.

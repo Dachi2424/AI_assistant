@@ -6,8 +6,11 @@ import Attach from "./attachmentOpion/Attach"
 import SendButton from "./SendButton"
 import { useEffect, useState } from "react"
 import axios, { isAxiosError } from "axios"
+import useChat from "@/app/context/useChat"
+import type { Message } from "@/app/context/ChatContext"
 
 export default function ChatInputBox() {
+  const {messages, setMessages, setConversationId, conversationId} = useChat()
   const [text, setText] = useState<string>("")
   const [messageLoading, setMessageLoading] = useState<boolean>(false)
   useEffect(() => {
@@ -20,14 +23,22 @@ export default function ChatInputBox() {
 
 
   async function handleSendPrompt(){
+    if(messageLoading || !text.trim()) return;
+
+    const newMessage: Message = {
+      content: text
+    }
+    setMessages(prev => ([...prev, newMessage]))
+    
     function sendMessage(){
-      return axios.post("/api/chat", {message: text})
+      return axios.post("/api/chat", { content: text, conversationId})
     }
     setMessageLoading(true)
     try{
       const res = await sendMessage()
-      console.log(res)
-      setText("")
+      if(!conversationId){
+        setConversationId(res.data?.conversationId)
+      }
     }catch(err){
         if(!isAxiosError(err) || err.response?.status !== 401){
           return console.error(err)
@@ -43,13 +54,16 @@ export default function ChatInputBox() {
 
         try{
           const res = await sendMessage()
-          console.log(res)
+          if(!conversationId){
+            setConversationId(res.data?.conversationId)
+          }
           setText("")
         } catch(err){
           throw new Error(isAxiosError(err) ? err.message : "Something went wrong, please try again")
         }
     } finally{
       setMessageLoading(false)
+      setText("")
     }
   }
 
@@ -57,8 +71,8 @@ export default function ChatInputBox() {
 
 
   return (
-    <div className="chat-box">
-      <h1 className="chat-box__title">What&#39;s on your mind today?</h1>
+    <div className={`chat-box ${messages.length > 0 ? "chat-box--down" : ""}`}>
+      <h1 className={`chat-box__title ${messages.length > 0 ? "chat-box__title--removed" : ""}`}>What&#39;s on your mind today?</h1>
       <div className="chat-box__input-container">
         <Input 
           text={text} 

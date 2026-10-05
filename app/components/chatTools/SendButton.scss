@@ -5,7 +5,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px;
+  width: 40px;
+  height: 40px;
   border: none;
   cursor: pointer;
   transition: .15s;
@@ -15,4 +16,23 @@
     background-color: transparent;
     transition: .15s;
   }
+
+  &__loader {
+    width: 20px;
+    --b: 4px; 
+    aspect-ratio: 1;
+    border-radius: 50%;
+    padding: 0px;
+    background: conic-gradient(#ffffff00 10%,#ffffff) content-box;
+    -webkit-mask:
+    repeating-conic-gradient(#0000 0deg,#000 5deg 20deg,#0000 21deg 36deg),
+    radial-gradient(farthest-side,#0000 calc(100% - var(--b) - 1px),#000 calc(100% - var(--b)));
+    -webkit-mask-composite: destination-in;
+    mask-composite: intersect;
+    animation:l4 1s infinite steps(10);
+  }
+  @keyframes l4 {to{transform: rotate(1turn)}}
 }
+
+
+/* HTML: <div class="loader"></div> */

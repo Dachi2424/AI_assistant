@@ -3,7 +3,13 @@
 import React, { SetStateAction, useRef, useLayoutEffect } from "react"
 import "./Input.scss"
 
-export default function Input({text, setText}: {text: string, setText: React.Dispatch<SetStateAction<string>>}) {
+export default function Input(
+  {text, setText, handleSendPrompt}: 
+  {
+    text: string, 
+    setText: React.Dispatch<SetStateAction<string>>,
+    handleSendPrompt: () => void
+  }) {
   
   const ref = useRef<HTMLTextAreaElement>(null)
   useLayoutEffect(() => {
@@ -26,6 +32,12 @@ export default function Input({text, setText}: {text: string, setText: React.Dis
         onChange={e => setText(e.target.value)}
         value={text}      
         rows={1}
+        onKeyDown={e => {
+          if(e.key === "Enter" && !e.shiftKey){
+            e.preventDefault()
+            if(text.trim()) handleSendPrompt()
+          }
+        }}
       />
       {!text && <span className="input__placeholder">Ask anything...</span>}
     </div>

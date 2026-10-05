@@ -95,7 +95,9 @@ export async function GET(request: Request){
     `refreshToken=${refreshToken}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax`
   )
 
-  return new Response("Logged in", {
+  headers.append("Location", "/chat")
+  return new Response(null, {
+    status: 302,
     headers
   })
 }

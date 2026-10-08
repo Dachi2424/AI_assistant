@@ -12,6 +12,7 @@ export default function Input(
   }) {
   
   const ref = useRef<HTMLTextAreaElement>(null)
+
   useLayoutEffect(() => {
     const el = ref.current
     if(!el) return
@@ -24,6 +25,7 @@ export default function Input(
     el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden"
   }, [text])
 
+  
   return (
     <div className="input">
       <textarea 

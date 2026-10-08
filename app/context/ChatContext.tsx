@@ -5,7 +5,8 @@ import React, { ReactNode, useState, createContext, SetStateAction, useEffect } 
 export type Message = {
   role?: "user" | "assistant",
   content: string,
-  createdAt?: string
+  createdAt?: string,
+  sent: boolean
 }
 
 type ChatContextType = {

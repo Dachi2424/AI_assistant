@@ -1,16 +1,13 @@
 'use client'
 
-import axios, { isAxiosError } from "axios"
 import "./SendButton.scss"
 import { ArrowUp } from "lucide-react"
-import { SetStateAction } from "react"
 
 export default function SendButton(
-  {text, messageLoading, setMessageLoading, handleSendPrompt} : 
+  {text, messageLoading, handleSendPrompt} : 
   {
     text: string, 
     messageLoading: boolean, 
-    setMessageLoading: React.Dispatch<SetStateAction<boolean>>,
     handleSendPrompt: () => void
 }) {
 

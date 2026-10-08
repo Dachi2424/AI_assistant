@@ -24,7 +24,6 @@ export async function POST(request: Request){
 
     const db = await connectToDatabase()
 
-
     if(!conversationId){
       const result = await db.collection("conversations").insertOne({
         userId: user._id,
@@ -41,7 +40,6 @@ export async function POST(request: Request){
         message: "Message posted successfully",
         conversationId: result.insertedId
       }, {status: 200})
-
 
 
     } else if(conversationId){
@@ -63,11 +61,11 @@ export async function POST(request: Request){
         createdAt: new Date()
       })
       return Response.json(
-        {message: "Message posted successfully", conversationId},
+        {message: "Message posted successfully"},
         {status: 200}
       )
     }
-
+    
   } catch{
     return Response.json(
       { error: "Couldn't send data, please try again" },

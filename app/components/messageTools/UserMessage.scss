@@ -1,0 +1,42 @@
+
+@keyframes showStatus {
+  0%{opacity: 0;}
+  100%{opacity: 1;}
+}
+
+@keyframes hideStatus {
+  0%{opacity: 1;}
+  99%{opacity: 0;}
+  100%{opacity: 0; display: none;}
+}
+
+.user-message{
+  margin-left: auto;
+  max-width: 400px;
+  width: fit-content;
+  margin-bottom: 30px;
+  position: relative;
+  &__container{
+    width: 100%;
+    background-color: var(--input-color);
+    padding: 20px 10px;
+    border-radius: 15px;
+  }
+  &__content{
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+  }
+  &__status{
+    position: absolute;
+    right: 0;
+    bottom: -18px;
+    user-select: none;
+    &--show{
+      animation: showStatus .1s ease;
+    }
+    &--hidden{
+      opacity: 0;
+      animation: hideStatus .1s ease;
+    }
+  }
+}

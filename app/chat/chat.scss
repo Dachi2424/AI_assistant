@@ -1,6 +1,9 @@
 
 .chat{
   min-height: 100vh;
+  width: var(--chatbox-width);
+  padding: 20px 0 20px;
+  margin-inline: auto;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -11,7 +11,7 @@ import type { Message } from "@/app/context/ChatContext"
 
 
 export default function ChatInputBox() {
-  const {messages, setMessages, setConversationId, conversationId} = useChat()
+  const {messages, setMessages, setConversationId, conversationId, setConversations} = useChat()
   const [text, setText] = useState<string>("")
   const [messageLoading, setMessageLoading] = useState<boolean>(false)
   useEffect(() => {
@@ -44,6 +44,10 @@ export default function ChatInputBox() {
       const res = await sendMessage()
       if(!conversationId){
         setConversationId(res.data?.conversationId)
+        setConversations(prev => [
+          { _id: res.data.conversationId, createdAt: new Date().toISOString() },
+          ...prev
+        ])
       }
       setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
     }catch(err){
@@ -63,6 +67,10 @@ export default function ChatInputBox() {
           const res = await sendMessage()
           if(!conversationId){
             setConversationId(res.data?.conversationId)
+            setConversations(prev => [
+              { _id: res.data.conversationId, createdAt: new Date().toISOString() },
+              ...prev
+            ])
           }
           setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
           setText("")

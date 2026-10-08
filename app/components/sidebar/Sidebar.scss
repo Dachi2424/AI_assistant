@@ -1,10 +1,17 @@
-
 .sidebar{
   flex-shrink: 0;
   width: 300px;
   background-color: var(--input-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   padding: 50px 20px 20px;
+
   &--hide{
-    display: none;
+    width: 0;
+    padding: 0;
+  }
+  &__new-chat-button{
+    cursor: pointer;
   }
 }

@@ -9,6 +9,7 @@ export default function Sidebar() {
   return (
     <aside className={`sidebar ${!showSidebar ? "sidebar--hide" : ""}`}>
       <span 
+        className="sidebar__new-chat-button"
         onClick={() => {
           setMessages([]);
           setConversationId(null)

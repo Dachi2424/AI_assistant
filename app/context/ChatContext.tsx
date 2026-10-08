@@ -1,6 +1,6 @@
 'use client'
 
-import React, { ReactNode, useState, createContext, SetStateAction, useEffect } from "react";
+import React, { ReactNode, useState, createContext, SetStateAction } from "react";
 
 export type Message = {
   role?: "user" | "assistant",
@@ -35,9 +35,6 @@ export default function ChatProvider({children}: {children: ReactNode}) {
   const [showSidebar, setShowSidebar] = useState<boolean>(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
 
-  useEffect(() => {
-    console.log(messages)
-  }, [messages])
 
   return (
     <ChatContext.Provider 

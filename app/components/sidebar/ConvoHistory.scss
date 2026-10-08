@@ -1,4 +1,20 @@
-
 .history{
-  
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+
+  &__convo-list{
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+  &__list{
+    padding: 10px 0;
+    cursor: default;
+    user-select: none;
+  }
+  &__show-more-text{
+    user-select: none;
+    cursor: pointer;
+  }
 }

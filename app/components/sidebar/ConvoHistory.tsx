@@ -8,16 +8,18 @@ export default function ConvoHistory() {
   const {conversations, setConversations, setMessages} = useChat()
   
   async function getConversations(){
+    const skip = conversations.length
+
     try{
-      const res = await axios.get("/api/conversations", {params: {skip: conversations.length}})
-      setConversations(prev => ([...prev, ...res.data.conversations]))
+      const res = await axios.get("/api/conversations", {params: {skip}})
+      setConversations(prev => skip === 0 ? res.data.conversations : [...prev, ...res.data.conversations])
     } catch(err){
       if(isAxiosError(err) && err.status !== 401) return console.error(err)
       
       try{
         await axios.get("/api/auth/refresh")
-        const res = await axios.get("/api/conversations", {params: {skip: conversations.length}})
-        setConversations(prev => ([...prev, ...res.data.conversations]))
+        const res = await axios.get("/api/conversations", {params: {skip}})
+        setConversations(prev => skip === 0 ? res.data.conversations : [...prev, ...res.data.conversations])
       } catch{
         throw new Error("Couldn't retrieve conversations")
       }
@@ -37,7 +39,7 @@ export default function ConvoHistory() {
       if(isAxiosError(err) && err.status !== 401) return console.error(err)
     
       try{
-        await axios.get("api/auth/refresh")
+        await axios.get("/api/auth/refresh")
         const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
         setMessages(res.data.conversations)
       } catch(retryErr){
@@ -51,11 +53,13 @@ export default function ConvoHistory() {
       <ul className="history__convo-list">
         {conversations.map(convo => (
           <li 
+            className="history__list"
             key={convo._id}
             onClick={() => handleLoadConvo(convo._id)}
           >{convo.createdAt}</li>
         ))}
       </ul>
+      <span className="history__show-more-text" onClick={getConversations}>Show more...</span>
     </div>
   )
 }

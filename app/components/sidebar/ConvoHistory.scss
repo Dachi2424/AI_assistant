@@ -1,20 +1,54 @@
 .history{
+  margin-top: 20px;
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-
+  &::-webkit-scrollbar{
+    width: 5px;
+  }
+  &::-webkit-scrollbar-thumb{
+    background-color: var(--scroll-thumb-color);
+    border-radius: 100px;
+  }
+  &::-webkit-scrollbar-thumb:hover{
+    background-color: rgb(160, 160, 160);
+  }
   &__convo-list{
     list-style: none;
     display: flex;
     flex-direction: column;
   }
-  &__list{
+  &__upper-container{
+    margin-inline: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     padding: 10px 0;
+  }
+  &__recents-text{
+    color: gray;
+    font-size: 18px;
+    font-weight: 600;
+    user-select: none;
+  }
+  &__search-icon{
+    cursor: pointer;
+    &:hover{
+      stroke: rgb(100, 100, 100);
+    }
+  }
+  &__list{
+    padding: 10px 20px;
     cursor: default;
     user-select: none;
+    border-radius: 12px;
+    &:hover{
+      background-color: var(--input-color);
+    }
   }
   &__show-more-text{
     user-select: none;
     cursor: pointer;
+    margin-left: 20px;
   }
 }

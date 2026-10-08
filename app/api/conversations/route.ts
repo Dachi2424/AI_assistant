@@ -21,7 +21,7 @@ export async function GET(request: Request){
     .find({userId: user._id})
     .sort({createdAt: -1})
     .skip(skip)
-    .limit(10)
+    .limit(15)
     .toArray()
 
     return Response.json(

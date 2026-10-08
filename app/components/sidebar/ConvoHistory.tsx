@@ -1,15 +1,20 @@
 "use client"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import "./ConvoHistory.scss"
 import useChat from "@/app/context/useChat"
 import axios, { isAxiosError } from "axios"
+import { Search } from "lucide-react"
 
 export default function ConvoHistory() {
   const {conversations, setConversations, setMessages} = useChat()
+  const [loadingConvos, setLoadingConvos] = useState<boolean>(false)
   
   async function getConversations(){
+    if(loadingConvos){
+      return
+    }
+    setLoadingConvos(true)
     const skip = conversations.length
-
     try{
       const res = await axios.get("/api/conversations", {params: {skip}})
       setConversations(prev => skip === 0 ? res.data.conversations : [...prev, ...res.data.conversations])
@@ -23,6 +28,8 @@ export default function ConvoHistory() {
       } catch{
         throw new Error("Couldn't retrieve conversations")
       }
+    } finally{
+      setLoadingConvos(false)
     }
   }
 
@@ -50,6 +57,13 @@ export default function ConvoHistory() {
 
   return (
     <div className="history">
+      <div className="history__upper-container">
+        <span className="history__recents-text">Recents</span>
+        <Search
+          size={16} 
+          className="history__search-icon"  
+        />
+      </div>
       <ul className="history__convo-list">
         {conversations.map(convo => (
           <li 
@@ -59,7 +73,7 @@ export default function ConvoHistory() {
           >{convo.createdAt}</li>
         ))}
       </ul>
-      <span className="history__show-more-text" onClick={getConversations}>Show more...</span>
+      <span className="history__show-more-text" onClick={getConversations}>{loadingConvos ? <div className="loader"></div> : "Show more"}</span>
     </div>
   )
 }

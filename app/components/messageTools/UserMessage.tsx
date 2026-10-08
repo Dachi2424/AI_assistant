@@ -3,10 +3,7 @@ import { useState } from "react"
 import "./UserMessage.scss"
 
 export default function UserMessage({content, createdAt, sent}: {content: string, createdAt: string | undefined, sent: boolean}) {
-
   const [showStatus, setShowStatus] = useState<boolean>(false)
-
-
 
   return (
     <div 

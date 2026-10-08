@@ -1,0 +1,10 @@
+
+.sidebar{
+  flex-shrink: 0;
+  width: 300px;
+  background-color: var(--input-color);
+  padding: 50px 20px 20px;
+  &--hide{
+    display: none;
+  }
+}

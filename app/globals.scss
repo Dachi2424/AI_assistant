@@ -1,4 +1,3 @@
-
 *{
   margin: 0;
   padding: 0;
@@ -30,4 +29,16 @@ resize: none;
 
 body{
   background-color: var(--color-secondary);
+}
+
+.app{
+  display: flex;
+  height: 100dvh;
+}
+
+.app__main{
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding-top: 46px;
 }

@@ -1,6 +1,6 @@
-
 .chat{
-  min-height: 100vh;
+  position: relative;
+  min-height: 100%;
   width: var(--chatbox-width);
   padding: 20px 0 20px;
   margin-inline: auto;

@@ -1,7 +1,11 @@
+import "./SystemMessage.scss"
+import ReactMarkdown from "react-markdown"
 
-export default function SystemMessage() {
+export default function SystemMessage({content} : {content: string}) {
 
   return (
-    <div>SystemMessage</div>
+    <div className="system-message">
+      <ReactMarkdown>{content}</ReactMarkdown>
+    </div>
   )
 }

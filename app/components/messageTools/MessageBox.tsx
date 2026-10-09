@@ -25,7 +25,10 @@ export default function MessageBox() {
             sent={message.sent}
           />
         ) : (
-          <SystemMessage key={i} />
+          <SystemMessage 
+            key={i} 
+            content={message.content}
+          />
         )
       ))}
       <div

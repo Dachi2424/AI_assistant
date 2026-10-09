@@ -45,11 +45,13 @@ export default function ChatInputBox() {
       if(!conversationId){
         setConversationId(res.data?.conversationId)
         setConversations(prev => [
-          { _id: res.data.conversationId, createdAt: new Date().toISOString() },
+          { _id: res.data?.conversationId, createdAt: res.data?.createdAt, title: res.data?.title },
           ...prev
         ])
       }
       setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
+      setMessages(prev => ([...prev, {role: "assistant", content: res.data?.assistantMessage, sent: true}]))
+      setText("")
     }catch(err){
         if(!isAxiosError(err) || err.response?.status !== 401){
           return console.error(err)
@@ -68,11 +70,13 @@ export default function ChatInputBox() {
           if(!conversationId){
             setConversationId(res.data?.conversationId)
             setConversations(prev => [
-              { _id: res.data.conversationId, createdAt: new Date().toISOString() },
+              { _id: res.data.conversationId, createdAt: res.data?.createdAt, title: res.data?.title },
               ...prev
             ])
           }
           setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
+          setMessages(prev => ([...prev, {role: "assistant", content: res.data?.assistantMessage, sent: true}]))
+
           setText("")
         } catch(err){
           throw new Error(isAxiosError(err) ? err.message : "Something went wrong, please try again")

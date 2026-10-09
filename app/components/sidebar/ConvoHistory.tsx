@@ -6,7 +6,7 @@ import axios, { isAxiosError } from "axios"
 import { Search } from "lucide-react"
 
 export default function ConvoHistory() {
-  const {conversations, setConversations, setMessages} = useChat()
+  const {conversations, setConversations, setMessages, setConversationId} = useChat()
   const [loadingConvos, setLoadingConvos] = useState<boolean>(false)
   
   async function getConversations(){
@@ -42,6 +42,7 @@ export default function ConvoHistory() {
     try{
       const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
       setMessages(res.data.conversations)
+      setConversationId(convoId)
     } catch(err){
       if(isAxiosError(err) && err.status !== 401) return console.error(err)
     
@@ -49,6 +50,7 @@ export default function ConvoHistory() {
         await axios.get("/api/auth/refresh")
         const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
         setMessages(res.data.conversations)
+        setConversationId(convoId)
       } catch(retryErr){
         throw new Error(isAxiosError(retryErr)? retryErr.response?.data : "Failed to fetch conversation")
       }
@@ -70,7 +72,7 @@ export default function ConvoHistory() {
             className="history__list"
             key={convo._id}
             onClick={() => handleLoadConvo(convo._id)}
-          >{convo.createdAt}</li>
+          >{convo.title}</li>
         ))}
       </ul>
       <span className="history__show-more-text" onClick={getConversations}>{loadingConvos ? <div className="loader"></div> : "Show more"}</span>

@@ -1,6 +1,11 @@
 import { connectToDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/getCurrentUser";
 import { ObjectId } from "mongodb";
+import { GoogleGenAI } from "@google/genai";
+
+
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
 
 export async function POST(request: Request){
@@ -14,6 +19,7 @@ export async function POST(request: Request){
         {status: 401}
       )
     }
+
     const { content, conversationId } = await request.json()
     if(!content){
       return Response.json(
@@ -25,9 +31,10 @@ export async function POST(request: Request){
     const db = await connectToDatabase()
 
     if(!conversationId){
+      const createdAt = new Date()
       const result = await db.collection("conversations").insertOne({
         userId: user._id,
-        createdAt: new Date(),
+        createdAt
       });
       await db.collection("messages").insertOne({
         conversationId: result.insertedId,
@@ -36,10 +43,43 @@ export async function POST(request: Request){
         content,
         createdAt: new Date()
       })
-      return Response.json({
-        message: "Message posted successfully",
-        conversationId: result.insertedId
-      }, {status: 200})
+    
+
+      const title = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: content,
+        config: {
+          systemInstruction: "generate maximum of 5 words title for the content provided for you. Do not add anything extra"
+        }
+      })
+      const geminiResponse = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents: content,
+      })
+      
+      
+      await db.collection("messages").insertOne({
+        conversationId: result.insertedId,
+        userId: user._id,
+        role: "assistant",
+        content: geminiResponse.text,
+        createdAt: new Date()
+      })
+
+      await db.collection("conversations").updateOne(
+        {_id: result.insertedId},
+        {$set: {title: title.text}}
+      )
+
+      return Response.json(
+        {
+          conversationId: result.insertedId,
+          assistantMessage: geminiResponse.text,
+          title: title.text,
+          createdAt
+        },
+        {status: 200}
+      )
 
 
     } else if(conversationId){
@@ -53,6 +93,7 @@ export async function POST(request: Request){
           {status: 404}
         )
       }
+      
       await db.collection("messages").insertOne({
         conversationId: new ObjectId(conversationId),
         userId: user._id,
@@ -60,13 +101,40 @@ export async function POST(request: Request){
         content,
         createdAt: new Date()
       })
+
+      const conversationHistory = await db.collection("messages")
+      .find({conversationId: new ObjectId(conversationId)})
+      .sort({createdAt: 1})
+      .toArray()
+
+      
+
+      const contents = conversationHistory.map(message => ({
+        role: message.role === "assistant" ? "model" : "user",
+        parts: [{ text: message.content }]
+      }))
+
+      const geminiResponse = await ai.models.generateContent({
+        model: "gemini-3.6-flash",
+        contents
+      })
+
+      await db.collection("messages").insertOne({
+        role: "assistant",
+        userId: user._id,
+        conversationId: new ObjectId(conversationId),
+        createdAt: new Date(),
+        content: geminiResponse.text
+      })
+
       return Response.json(
-        {message: "Message posted successfully"},
+        {assistantMessage: geminiResponse.text},
         {status: 200}
       )
     }
     
-  } catch{
+  } catch(err){
+    console.error(err)
     return Response.json(
       { error: "Couldn't send data, please try again" },
       { status: 400 }

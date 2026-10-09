@@ -29,7 +29,7 @@ export async function GET(request: Request){
     const conversations = await db.collection("messages")
     .find({userId: user._id, conversationId: new ObjectId(conversationId)})
     .sort({createdAt: -1})
-    .limit(30)
+    .limit(60)
     .skip(skip)
     .toArray()
 
@@ -41,7 +41,7 @@ export async function GET(request: Request){
     }
 
     return Response.json(
-      {conversations},
+      {conversations: conversations.reverse()},
       {status: 200}
     )
 

@@ -6,7 +6,12 @@
   color: white;
 }
 
+body{
+  font-family: var(--font-roboto), sans-serif;
+}
+
 input, select, option, textarea, button{
+  font-family: inherit;
   color: white;
   font-size: 16px;
 }

@@ -72,7 +72,7 @@ export default function ConvoHistory() {
             className="history__list"
             key={convo._id}
             onClick={() => handleLoadConvo(convo._id)}
-          >{convo.title}</li>
+          >{convo.title || "Untitled"}</li>
         ))}
       </ul>
       <span className="history__show-more-text" onClick={getConversations}>{loadingConvos ? <div className="loader"></div> : "Show more"}</span>

@@ -11,10 +11,12 @@ export async function GET(){
   const uri = oauth2Client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
+    include_granted_scopes: true,
     scope: [
       "openid",
       "email",
-      "profile"
+      "profile",
+      "https://www.googleapis.com/auth/gmail.readonly"
     ]
   })
 

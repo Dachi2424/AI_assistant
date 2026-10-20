@@ -29,6 +29,7 @@ type ChatContextType = {
 
 
 export const ChatContext = createContext<ChatContextType | null>(null)
+
 export default function ChatProvider({children}: {children: ReactNode}) {
   const [messages, setMessages] = useState<Message[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)

@@ -53,3 +53,36 @@ export async function readEmail(auth: GoogleClient, id: string){
     body: (findText(msg.data.payload) || msg.data.snippet || "").slice(0, 3000)
   }
 }
+
+
+type EmailInput = {
+  to: string,
+  subject: string,
+  body: string
+}
+
+export async function sendEmail(auth: GoogleClient, { to, subject, body }: EmailInput){
+  // header values must not contain line breaks, otherwise extra headers could be injected
+  if(/[\r\n]/.test(to)) throw new Error("Invalid recipient")
+
+  const gmail = google.gmail({version: "v1", auth})
+
+  const message = [
+    `To: ${to}`,
+    // encoded-word syntax keeps non-ASCII subjects (e.g. Georgian) from being garbled
+    `Subject: =?UTF-8?B?${Buffer.from(subject.replace(/[\r\n]+/g, " "), "utf-8").toString("base64")}?=`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "",
+    body
+  ].join("\r\n")
+
+  const res = await gmail.users.messages.send({
+    userId: "me",
+    requestBody: {
+      raw: Buffer.from(message, "utf-8").toString("base64url")
+    }
+  })
+
+  return { id: res.data.id, threadId: res.data.threadId }
+}

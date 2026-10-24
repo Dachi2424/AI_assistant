@@ -7,10 +7,10 @@
   align-items: center;
   gap: 24px;
   &--down{
-    position: fixed;
+    // sticks to the bottom of the scrolling area, so it follows the sidebar like the messages do
+    position: sticky;
     bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    max-width: none;
   }
   &__title {
     font-size: 2rem;

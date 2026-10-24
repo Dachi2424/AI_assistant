@@ -2,11 +2,22 @@
 
 import React, { ReactNode, useState, createContext, SetStateAction } from "react";
 
+export type Draft = {
+  id: string,
+  to: string,
+  subject: string,
+  body: string,
+  // a draft without a status is pending
+  status?: "pending" | "working" | "sent" | "cancelled",
+  error?: string
+}
+
 export type Message = {
   role?: "user" | "assistant",
   content: string,
   createdAt?: string,
-  sent: boolean
+  sent: boolean,
+  drafts?: Draft[]
 }
 
 export type Conversation = {

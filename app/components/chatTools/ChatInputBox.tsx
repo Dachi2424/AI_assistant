@@ -50,7 +50,7 @@ export default function ChatInputBox() {
         ])
       }
       setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
-      setMessages(prev => ([...prev, {role: "assistant", content: res.data?.assistantMessage, sent: true}]))
+      setMessages(prev => ([...prev, {role: "assistant", content: res.data?.assistantMessage, sent: true, drafts: res.data?.drafts}]))
       setText("")
     }catch(err){
         if(!isAxiosError(err) || err.response?.status !== 401){
@@ -75,7 +75,7 @@ export default function ChatInputBox() {
             ])
           }
           setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
-          setMessages(prev => ([...prev, {role: "assistant", content: res.data?.assistantMessage, sent: true}]))
+          setMessages(prev => ([...prev, {role: "assistant", content: res.data?.assistantMessage, sent: true, drafts: res.data?.drafts}]))
 
           setText("")
         } catch(err){

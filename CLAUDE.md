@@ -31,10 +31,10 @@ There is no test runner configured.
 
 **Data (MongoDB, db `ai-assistant`, via `lib/db.ts`):** collections `users`, `google_accounts`, `conversations` (`userId`, `title`, `createdAt`), `messages` (`conversationId`, `userId`, `role: "user" | "assistant"`, `content`, `createdAt`). Always scope queries by `userId`.
 
-**Chat flow (`app/api/chat/route.ts`):** one POST handles both cases.
-- No `conversationId`: creates the conversation, stores the user message, makes a separate Gemini call to generate a ≤5-word title, then the main Gemini call (with the `listEmails` function declaration), stores the assistant reply and title.
-- With `conversationId`: verifies ownership, appends the user message, rebuilds full history from `messages` (role `assistant` → Gemini `model`), calls Gemini, stores reply.
-- Tool use is only partially wired: the new-conversation path declares `listEmails` and logs `functionCalls` but doesn't execute them or feed results back, and the existing-conversation path passes no tools. `lib/googleClient.ts` (`getGoogleClient(userId)` builds an OAuth2 client from the stored refresh token) and `lib/gmail.ts` (`listEmails`) are the pieces meant to be called from the tool loop. `api/google/gmail` exposes Gmail directly.
+**Chat flow (`app/api/chat/route.ts`):** one POST handles both cases, and both go through `generateWithTools(userId, contents)`.
+- No `conversationId`: creates the conversation, stores the user message, makes a separate Gemini call to generate a short title, then runs `generateWithTools`, stores the assistant reply and title.
+- With `conversationId`: verifies ownership, appends the user message, rebuilds full history from `messages` (role `assistant` → Gemini `model`), runs `generateWithTools`, stores reply.
+- `generateWithTools` is the tool loop (max 5 rounds): it declares `listEmails` and `readEmail`, executes any `functionCalls` via `lib/gmail.ts` using `getGoogleClient(userId)` (`lib/googleClient.ts`, OAuth2 client from the stored refresh token), and feeds `functionResponse` parts back until the model returns text. Tool calls/results are not persisted — only the final text is saved to `messages`, so history replays as plain text. To add a tool, add a declaration, a branch in the loop, and a function in `lib/gmail.ts`. `api/google/gmail` also exposes Gmail directly.
 
 **Client state:** `app/context/ChatContext.tsx` (provider) holds messages, active `conversationId`, sidebar visibility, and conversation list; consume it only through the `useChat` hook. Components are grouped under `app/components/{chatTools,messageTools,sidebar,Header}`. Pages: `app/(root)` (landing) and `app/chat`.
 

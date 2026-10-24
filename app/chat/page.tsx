@@ -9,7 +9,7 @@ export default function Chat() {
   const {messages} = useChat()
 
   return (
-    <section className="chat">
+    <section className={`chat ${messages.length > 0 ? "chat--has-messages" : ""}`}>
       {/* <button style={{ color: "black", cursor: "pointer" }}>New Chat</button> */}
       {messages.length > 0 && <MessageBox />}
       <ChatInputBox />

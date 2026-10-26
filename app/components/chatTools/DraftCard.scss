@@ -7,45 +7,58 @@
   border-radius: 20px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 
   &__header{
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.6);
-
-    * {
-      color: inherit;
-    }
+    color: rgba(255, 255, 255, 0.7);
   }
 
   &__fields{
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 6px 14px;
-    align-items: baseline;
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  &__field{
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    cursor: text;
   }
 
   &__label{
+    width: 56px;
+    flex-shrink: 0;
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.5);
   }
 
-  &__value{
-    overflow-wrap: anywhere;
+  &__input,
+  &__textarea{
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: inherit;
+    font: inherit;
+
+    &:disabled{
+      opacity: .6;
+    }
   }
 
-  &__body{
-    max-height: 240px;
-    overflow-y: auto;
-    padding: 12px 14px;
-    background-color: rgba(0, 0, 0, 0.35);
-    border-radius: 12px;
+  &__textarea{
+    min-height: 160px;
+    max-height: 320px;
+    padding: 4px 0;
     line-height: 1.6;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
+    resize: none;
   }
 
   &__error{

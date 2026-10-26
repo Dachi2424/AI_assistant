@@ -16,7 +16,21 @@ export async function POST(request: Request){
         {status: 401}
       )
     }
-    const { draftId } = await request.json()
+    const { draftId, to, subject, body } = await request.json()
+    if(typeof to !== "string" || typeof subject !== "string" || typeof body !== "string" || !to.trim() || !subject.trim() || !body.trim()){
+      return Response.json(
+        {error: "Please fill in all the fields"},
+        {status: 400}
+      )
+    }
+
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to.trim())){
+      return Response.json(
+        {error: "Please enter a valid email address"},
+        {status: 400}
+      )
+    }
+
     const db = await connectToDatabase()
     const draft = await db.collection("email_drafts").findOne({
       _id: new ObjectId(draftId as string),
@@ -29,6 +43,7 @@ export async function POST(request: Request){
         {status: 404}
       )
     }
+
     
     let oauth2;
     try{
@@ -41,7 +56,7 @@ export async function POST(request: Request){
     }
 
     try{
-      await sendEmail(oauth2, { to: draft.to, subject: draft.subject, body: draft.body})
+      await sendEmail(oauth2, { to: to.trim(), subject: subject, body: body})
     } catch(err){
       console.error(err)
       return Response.json(
@@ -52,7 +67,7 @@ export async function POST(request: Request){
 
     await db.collection("email_drafts").updateOne(
       {_id: draft._id},
-      {$set: {status: "sent", sentAt: new Date()}}
+      {$set: {status: "sent", sentAt: new Date(), to: to.trim(), subject, body}}
     )
 
     return Response.json(

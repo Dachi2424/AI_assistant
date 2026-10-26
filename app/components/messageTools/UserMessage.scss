@@ -12,25 +12,55 @@
 
 .user-message{
   margin-left: auto;
-  max-width: 400px;
+  max-width: 500px;
   width: fit-content;
   margin-bottom: 30px;
   position: relative;
   &__container{
     width: 100%;
     background-color: var(--input-color);
-    padding: 20px 10px;
+    padding: 15px;
     border-radius: 15px;
+    &--shrunk{
+      background-color: unset;
+      background: linear-gradient(rgb(35, 35, 35), rgba(35, 35, 35, .2));
+      .user-message__content{
+        -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent);
+        mask-image: linear-gradient(to bottom, #000 40%, transparent);
+      }
+    }
   }
   &__content{
     overflow-wrap: anywhere;
     white-space: pre-wrap;
+    &--clamped{
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 15;
+      line-clamp: 15;
+      overflow: hidden;
+    }
+  }
+  &__toggle{
+    margin-top: 8px;
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: .7;
+    user-select: none;
+    &:hover{
+      opacity: 1;
+    }
   }
   &__status{
     position: absolute;
     right: 0;
     bottom: -18px;
     user-select: none;
+    font-size: 14px;
     &--show{
       animation: showStatus .1s ease;
     }

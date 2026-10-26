@@ -44,24 +44,24 @@ const readEmailDeclaration = {
 
 const sendEmailDeclaration = {
   name: "sendEmail",
-  description: "Prepare a new email for the user to review before it is sent. Use it when the user asks to send, write or reply with an email. The email is NOT sent when you call this; the user must confirm it first, so tell the user the draft is ready for their confirmation and never say it was already sent. Only use a recipient's email address that appears in this conversation. If the user names someone (e.g. 'Marie') without giving their full email address, do NOT search the inbox for it and do NOT call any tool: reply asking the user for the recipient's email address, and call this only after they give it.",
+  description: "Prepare a new email for the user to review before it is sent. Use it when the user asks to send, write or reply with an email. The email is NOT sent when you call this; the user might edit and must confirm it first, so tell the user the draft is ready for editing and their confirmation and never say it was already sent. The user fills in and edits the recipient, subject and body in the draft themselves, so NEVER ask the user for any of them: call this right away with whatever the user already told you and leave every other field empty. Only use a recipient's email address that appears in this conversation, otherwise leave `to` empty. If the user names someone (e.g. 'Marie') without giving their full email address, do NOT search the inbox for it and just leave `to` empty.",
   parameters: {
     type: Type.OBJECT,
     properties: {
       to: {
         type: Type.STRING,
-        description: "The recipient's full email address, e.g. 'ana@example.com'. A single address only, exactly as it appears in this conversation. Never guess or invent one."
+        description: "The recipient's full email address, e.g. 'ana@example.com'. A single address only, exactly as it appears in this conversation. Never guess or invent one. Leave empty if the user didn't give one."
       },
       subject: {
         type: Type.STRING,
-        description: "A short, clear subject line for the email, in the same language as the body."
+        description: "A short, clear subject line for the email, in the same language as the body. Leave empty if the user didn't say what the email is about or what it should contain."
       },
       body: {
         type: Type.STRING,
-        description: "The full plain text content of the email, written the way the user would write it, including a greeting and sign-off. Do not use markdown or HTML."
+        description: "The full plain text content of the email, written the way the user would write it, including a greeting. Leave empty if the user didn't say what the email should contain; never invent content. Do not sign off with a name, since you don't know it. Do not use markdown or HTML."
       }
     },
-    required: ["to", "subject", "body"]
+    required: []
   }
 }
 
@@ -104,8 +104,8 @@ async function generateWithTools(userId: ObjectId, conversationId: ObjectId, con
             const subject = String(call.args?.subject ?? "")
             const body = String(call.args?.body ?? "")
 
-            if (!EMAIL_PATTERN.test(to)) {
-              result = { error: `"${to}" is not a valid email address. Ask the user for the correct address.` }
+            if (to && !EMAIL_PATTERN.test(to)) {
+              result = { error: `"${to}" is not a valid email address. Call sendEmail again with \`to\` left empty so the user can fill it in.` }
             } else {
               const db = await connectToDatabase()
               const inserted = await db.collection("email_drafts").insertOne({

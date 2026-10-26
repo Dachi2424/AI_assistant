@@ -1,7 +1,8 @@
 'use client'
 
 import axios, { isAxiosError } from "axios"
-import { Check, Mail, X } from "lucide-react"
+import Image from "next/image"
+import { Check, X } from "lucide-react"
 import useChat from "@/app/context/useChat"
 import type { Draft } from "@/app/context/ChatContext"
 import "./DraftCard.scss"
@@ -22,7 +23,10 @@ export default function DraftCard({draft}: {draft: Draft}) {
 
   async function postAction(action: "send" | "cancel"){
     async function request(){
-      return axios.post(`/api/google/gmail/${action}`, {draftId: draft.id})
+      return axios.post(`/api/google/gmail/${action}`, action === "send" 
+        ? {draftId: draft.id, to: draft.to.trim(), subject: draft.subject, body: draft.body}
+        : {draftId: draft.id}
+      )
     }
     try{
       await request()
@@ -56,29 +60,51 @@ export default function DraftCard({draft}: {draft: Draft}) {
       <div className="draft draft--done">
         {status === "sent" ? <Check size={16} /> : <X size={16} />}
         <span>
-          {status === "sent" ? `Email sent to ${draft.to}` : `Draft to ${draft.to} cancelled`}
+          {status === "sent" ? `Email sent to ${draft.to}` : draft.to ? `Draft to ${draft.to} cancelled` : "Draft cancelled"}
         </span>
       </div>
     )
   }
 
   const working = status === "working"
+  const canSend = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(draft.to?.trim() ?? "") && !!draft.subject?.trim() && !!draft.body?.trim()
 
   return (
     <div className="draft">
       <div className="draft__header">
-        <Mail size={16} />
-        <span>Email draft</span>
+        <Image src="/gmail.svg" alt="" width={20} height={15} />
+        <span>New email</span>
       </div>
 
       <div className="draft__fields">
-        <span className="draft__label">To</span> 
-        <span className="draft__value">{draft.to}</span>
-        <span className="draft__label">Subject</span>
-        <span className="draft__value">{draft.subject || "(no subject)"}</span>
+        <label className="draft__field">
+          <span className="draft__label">To</span>
+          <input
+            className="draft__input"
+            type="text"
+            value={draft.to ?? ""}
+            disabled={working}
+            onChange={e => updateDraft({to: e.target.value})}
+          />
+        </label>
+        <label className="draft__field">
+          <span className="draft__label">Subject</span>
+          <input
+            className="draft__input"
+            type="text"
+            value={draft.subject ?? ""}
+            disabled={working}
+            onChange={e => updateDraft({subject: e.target.value})}
+          />
+        </label>
       </div>
-
-      <div className="draft__body">{draft.body}</div>
+      <textarea
+        className="draft__textarea"
+        placeholder="Write your message..."
+        value={draft.body ?? ""}  
+        disabled={working}
+        onChange={e => updateDraft({body: e.target.value})}
+      ></textarea>
 
       {draft.error && <p className="draft__error">{draft.error}</p>}
 
@@ -92,10 +118,10 @@ export default function DraftCard({draft}: {draft: Draft}) {
         </button>
         <button
           className="draft__button draft__button--approve"
-          disabled={working}
+          disabled={working || !canSend}
           onClick={() => handleAction("send")}
         >
-          {working ? "Working..." : "Approve"}
+          {working ? "Working..." : "Send"}
         </button>
       </div>
     </div>

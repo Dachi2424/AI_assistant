@@ -1,12 +1,11 @@
 
-10/24/2026 - I've realized it's a lot more work than i planned. I'm gonna fully focus on gmail features for
-the next several days before moving to other tools. I've already implemented getAll, getOne, and send email
-system. they are very basic and need polishing. 
+10/26/2026 - I've made email drafts dynamic so user can now customize the draft that AI has sent.
 
 
 the next things to do is: 
 - let AI always know you by your name, email and everything google gave it access to.
 - make sure that whenever you leave the conversation and get back to it all the "sent" marks dont disappear
+- I wanna add buttons in the end of draft inputs so that AI can generate specific fields like body
 
 
 BUGS:

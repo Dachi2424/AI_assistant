@@ -40,8 +40,33 @@ export async function GET(request: Request){
       )
     }
 
+    const draftIds = conversations.flatMap((message) => message.draftIds ?? [])
+
+    const drafts = draftIds.length > 0
+      ? await db.collection("email_drafts")
+        .find({_id: {$in: draftIds}, userId: user._id})
+        .toArray()
+      : []
+
+    // the frontend expects full drafts on the message, not just their ids
+    const messages = conversations.map((message) => {
+      if(!message.draftIds) return message
+      return {
+        ...message,
+        drafts: drafts
+          .filter(draft => message.draftIds.some((id: ObjectId) => id.equals(draft._id)))
+          .map(draft => ({
+            id: draft._id.toString(),
+            to: draft.to,
+            subject: draft.subject,
+            body: draft.body,
+            status: draft.status
+          }))
+      }
+    })
+
     return Response.json(
-      {conversations: conversations.reverse()},
+      {conversations: messages.reverse()},
       {status: 200}
     )
 

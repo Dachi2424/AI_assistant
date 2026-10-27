@@ -17,6 +17,8 @@ export type Message = {
   content: string,
   createdAt?: string,
   sent: boolean,
+  // only set on messages created in this session, so loaded conversations don't animate
+  isNew?: boolean,
   drafts?: Draft[]
 }
 

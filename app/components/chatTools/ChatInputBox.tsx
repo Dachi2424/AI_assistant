@@ -30,7 +30,8 @@ export default function ChatInputBox() {
       content: text,
       role: "user",
       createdAt: new Date().toISOString(),
-      sent: false
+      sent: false,
+      isNew: true
     }
 
     setMessages(prev => ([...prev, newMessage]))

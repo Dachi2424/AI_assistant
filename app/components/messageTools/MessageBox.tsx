@@ -29,6 +29,7 @@ export default function MessageBox() {
             content={message.content}
             createdAt={message.createdAt}
             sent={message.sent}
+            isNew={message.isNew}
           />
         ) : (
           <Fragment key={i}>

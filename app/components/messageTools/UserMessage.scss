@@ -10,12 +10,20 @@
   100%{opacity: 0; display: none;}
 }
 
+@keyframes messageEnter {
+  0%{opacity: 0; transform: translateY(12px);}
+  100%{opacity: 1; transform: translateY(0);}
+}
+
 .user-message{
   margin-left: auto;
   max-width: 500px;
   width: fit-content;
   margin-bottom: 30px;
   position: relative;
+  &--enter{
+    animation: messageEnter .3s ease-out;
+  }
   &__container{
     width: 100%;
     background-color: var(--input-color);

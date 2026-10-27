@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react"
 import "./UserMessage.scss"
 
-export default function UserMessage({content, createdAt, sent}: {content: string, createdAt: string | undefined, sent?: boolean}) {
+export default function UserMessage({content, createdAt, sent, isNew}: {content: string, createdAt: string | undefined, sent?: boolean, isNew?: boolean}) {
   const [showStatus, setShowStatus] = useState<boolean>(false)
   const [expanded, setExpanded] = useState<boolean>(false)
   const [overflowing, setOverflowing] = useState<boolean>(false)
@@ -23,7 +23,7 @@ export default function UserMessage({content, createdAt, sent}: {content: string
 
   return (
     <div 
-      className="user-message" 
+      className={`user-message ${isNew ? "user-message--enter" : ""}`}
       onMouseOver={() => setShowStatus(true)} 
       onMouseLeave={() => setShowStatus(false)}
     >

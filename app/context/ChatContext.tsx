@@ -19,6 +19,8 @@ export type Message = {
   sent: boolean,
   // only set on messages created in this session, so loaded conversations don't animate
   isNew?: boolean,
+  // true while the assistant's reply is still arriving
+  streaming?: boolean,
   drafts?: Draft[]
 }
 

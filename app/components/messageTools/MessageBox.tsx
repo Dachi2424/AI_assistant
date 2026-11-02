@@ -33,7 +33,7 @@ export default function MessageBox() {
           />
         ) : (
           <Fragment key={i}>
-            <SystemMessage content={message.content} />
+            <SystemMessage content={message.content} loading={message.streaming && !message.content} />
             {message.drafts?.map(draft => {
               const pending = !draft.status || draft.status === "pending" || draft.status === "working"
               const visible = !pending || (i === lastDraftIndex && !waitingForReply)

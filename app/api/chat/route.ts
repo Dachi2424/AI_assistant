@@ -1,9 +1,10 @@
 import { connectToDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/getCurrentUser";
 import { ObjectId } from "mongodb";
-import { GoogleGenAI, Type, type Content, type Part } from "@google/genai";
+import { GoogleGenAI, Type, type Content, type FunctionCall, type Part } from "@google/genai";
 import { getGoogleClient } from "@/lib/googleClient";
 import { listEmails, readEmail } from "@/lib/gmail";
+import type { StreamEvent } from "@/lib/streamEvents";
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -11,12 +12,12 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 const listEmailsDeclaration = {
   name: "listEmails",
   description: "Search the user's Gmail inbox and return a list of matching emails with their id, sender, date, subject and a short snippet (not the full text). Use it whenever the user asks about, looks for, or wants a summary of their existing emails. To get the full content of one of the results, call readEmail with its id.",
-  parameters: {
+  parameters: {      
     type: Type.OBJECT,
     properties: {
       query: {
         type: Type.STRING,
-        description: "Gmail search query, using the same syntax as the Gmail search box, e.g. 'from:ana@example.com', 'subject:invoice', 'is:unread', 'newer_than:7d', 'has:attachment'. Operators can be combined. Use an empty string to get the most recent emails without any filter."
+        description: "Gmail search query, using the same syntax as the Gmail search box, e.g. 'from:ana@example.com', 'subject:invoice', 'is:unread', 'newer_than:7d', 'has:attachment'. Operators can be combined. When the user asks about their emails in general (e.g. 'unread emails', 'new emails', 'latest emails'), always add 'category:primary' to the query, e.g. 'is:unread category:primary', so promotions, social and updates emails are left out. Only search other categories ('category:promotions', 'category:social', 'category:updates') when the user explicitly asks for them, and do not add 'category:primary' when the user looks for a specific sender, subject or email, since that email may be in any category."
       },
       maxResults: {
         type: Type.NUMBER,
@@ -28,7 +29,7 @@ const listEmailsDeclaration = {
 
 const readEmailDeclaration = {
   name: "readEmail",
-  description: "Read the full plain text body of one email, along with its sender, subject and date. Use it when the snippet from listEmails is not enough, e.g. the user asks what an email says, wants its details, or wants a reply written based on it. You must call listEmails first to get the id.",
+  description: "Read the full plain text body of one email, along with its sender, subject and date and give the user detailed information about the email. Use it when the snippet from listEmails is not enough, e.g. the user asks what an email says, wants its details, or wants a reply written based on it. You must call listEmails first to get the id.",
   parameters: {
     type: Type.OBJECT,
     properties: {
@@ -75,11 +76,25 @@ type EmailDraft = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-async function generateWithTools(userId: ObjectId, conversationId: ObjectId, contents: Content[]) {
+const encoder = new TextEncoder()
+
+const streamHeaders = {
+  "Content-Type": "application/x-ndjson; charset=utf-8",
+  "Cache-Control": "no-cache, no-transform"
+}
+
+// `send` pushes one event (text, draft, ...) to the browser while the reply is being generated
+async function generateWithTools(userId: ObjectId, conversationId: ObjectId, contents: Content[], send: (event: StreamEvent) => void) {
   const drafts: EmailDraft[] = []
+  let reply = ""
+
+  function sendText(text: string) {
+    reply += text
+    send({ type: "text", text })
+  }
 
   for (let round = 0; round < 5; round++) {
-    const response = await ai.models.generateContent({
+    const stream = await ai.models.generateContentStream({
       model: "gemini-3.6-flash",
       contents,
       config: {
@@ -87,12 +102,28 @@ async function generateWithTools(userId: ObjectId, conversationId: ObjectId, con
       }
     })
 
-    const calls = response.functionCalls;
-    if (!calls || calls.length === 0) {
-      return { reply: response.text || "Sorry, I couldn't generate a reply.", drafts }
+    const modelParts: Part[] = []
+    const calls: FunctionCall[] = []
+    let roundHasText = false
+
+    for await (const chunk of stream) {
+      for (const part of chunk.candidates?.[0]?.content?.parts ?? []) {
+        modelParts.push(part)
+        if (part.functionCall) calls.push(part.functionCall)
+        if (part.text && !part.thought) {
+          // text from an earlier round (e.g. "let me check your inbox") needs a gap before the next one
+          sendText(!roundHasText && reply ? "\n\n" + part.text : part.text)
+          roundHasText = true
+        }
+      }
     }
 
-    contents.push(response.candidates![0].content!)
+    if (calls.length === 0) {
+      if (!reply) sendText("Sorry, I couldn't generate a reply.")
+      return { reply, drafts }
+    }
+
+    contents.push({ role: "model", parts: modelParts })
 
     const parts: Part[] = await Promise.all(
       calls.map(async (call): Promise<Part> => {
@@ -118,6 +149,7 @@ async function generateWithTools(userId: ObjectId, conversationId: ObjectId, con
                 createdAt: new Date()
               })
               drafts.push({ id: inserted.insertedId, to, subject, body })
+              send({ type: "draft", draft: { id: inserted.insertedId.toString(), to, subject, body } })
               result = { draftId: inserted.insertedId.toString(), status: "awaiting_user_confirmation" }
             }
             return { functionResponse: { id: call.id, name: call.name, response: result } }
@@ -143,7 +175,8 @@ async function generateWithTools(userId: ObjectId, conversationId: ObjectId, con
     contents.push({ role: "user", parts })
   }
 
-  return { reply: "I couldn't finish that request.", drafts }
+  sendText(reply ? "\n\nI couldn't finish that request." : "I couldn't finish that request.")
+  return { reply, drafts }
 }
 
 
@@ -184,40 +217,59 @@ export async function POST(request: Request){
         createdAt: new Date()
       })
 
-      const title = await ai.models.generateContent({
+      // runs while the reply is being written; a failed title must not break the reply
+      const titlePromise = ai.models.generateContent({
         model: "gemini-3.5-flash",
         contents: content,
         config: {
           systemInstruction: "generate maximum of 7 words title for the content provided for you. Do not add anything extra"
         }
+      }).catch(err => {
+        console.error(err)
+        return null
       })
 
-      const { reply, drafts } = await generateWithTools(user._id, result.insertedId, [{role: "user", parts: [{ text: content }]}])
+      const stream = new ReadableStream({
+        async start(controller){
+          function send(event: StreamEvent){
+            controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"))
+          }
 
-      await db.collection("messages").insertOne({
-        conversationId: result.insertedId,
-        userId: user._id,
-        role: "assistant",
-        content: reply,
-        ...(drafts.length > 0 && { draftIds: drafts.map(draft => draft.id) }),
-        createdAt: new Date()
+          try{
+            send({ type: "meta", conversationId: result.insertedId.toString(), createdAt: createdAt.toISOString() })
+
+            const { reply, drafts } = await generateWithTools(user._id, result.insertedId, [{role: "user", parts: [{ text: content }]}], send)
+
+            await db.collection("messages").insertOne({
+              conversationId: result.insertedId,
+              userId: user._id,
+              role: "assistant",
+              content: reply,
+              ...(drafts.length > 0 && { draftIds: drafts.map(draft => draft.id) }),
+              createdAt: new Date()
+            })
+
+            const title = await titlePromise
+            if(title?.text){
+              await db.collection("conversations").updateOne(
+                {_id: result.insertedId},
+                {$set: {title: title.text}}
+              )
+              send({ type: "title", title: title.text })
+            }
+
+            send({ type: "done" })
+          } catch(err){
+            // the 200 status is already sent, so the error has to travel inside the stream
+            console.error(err)
+            send({ type: "error", error: "Couldn't generate a reply, please try again" })
+          } finally{
+            controller.close()
+          }
+        }
       })
 
-      await db.collection("conversations").updateOne(
-        {_id: result.insertedId},
-        {$set: {title: title.text}}
-      )
-
-      return Response.json(
-        {
-          conversationId: result.insertedId,
-          assistantMessage: reply,
-          drafts,
-          title: title.text,
-          createdAt
-        },
-        {status: 200}
-      )
+      return new Response(stream, { headers: streamHeaders })
 
 
     } else if(conversationId){
@@ -252,24 +304,35 @@ export async function POST(request: Request){
           parts: [{ text: message.content }]
         }))
 
-      const { reply, drafts } = await generateWithTools(user._id, new ObjectId(conversationId), contents)
+      const stream = new ReadableStream({
+        async start(controller){
+          function send(event: StreamEvent){
+            controller.enqueue(encoder.encode(JSON.stringify(event) + "\n"))
+          }
 
-      await db.collection("messages").insertOne({
-        role: "assistant",
-        userId: user._id,
-        conversationId: new ObjectId(conversationId),
-        createdAt: new Date(),
-        content: reply,
-        ...(drafts.length > 0 && { draftIds: drafts.map(draft => draft.id) })
+          try{
+            const { reply, drafts } = await generateWithTools(user._id, new ObjectId(conversationId), contents, send)
+
+            await db.collection("messages").insertOne({
+              role: "assistant",
+              userId: user._id,
+              conversationId: new ObjectId(conversationId),
+              createdAt: new Date(),
+              content: reply,
+              ...(drafts.length > 0 && { draftIds: drafts.map(draft => draft.id) })
+            })
+
+            send({ type: "done" })
+          } catch(err){
+            console.error(err)
+            send({ type: "error", error: "Couldn't generate a reply, please try again" })
+          } finally{
+            controller.close()
+          }
+        }
       })
 
-      return Response.json(
-        {
-          assistantMessage: reply,
-          drafts
-        },
-        {status: 200}
-      )
+      return new Response(stream, { headers: streamHeaders })
     }
 
   } catch(err){

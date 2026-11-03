@@ -31,7 +31,7 @@
     border-radius: 15px;
     &--shrunk{
       background-color: unset;
-      background: linear-gradient(rgb(35, 35, 35), rgba(35, 35, 35, .2));
+      background: linear-gradient(var(--input-color), color-mix(in srgb, var(--input-color) 20%, transparent));
       .user-message__content{
         -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent);
         mask-image: linear-gradient(to bottom, #000 40%, transparent);

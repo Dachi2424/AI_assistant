@@ -64,7 +64,7 @@ export default function ChatInputBox() {
 
       setMessages(prev => prev.map(message => message === newMessage ? {...message, sent: true} : message))
       // empty bubble that the reply is written into as it arrives
-      setMessages(prev => ([...prev, {role: "assistant", content: "", sent: true, streaming: true}]))
+      setMessages(prev => ([...prev, {role: "assistant", content: "", sent: true, streaming: true, isNew: true}]))
       setText("")
       await readStream(res.body)
     } catch(err){

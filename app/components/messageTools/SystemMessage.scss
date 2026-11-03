@@ -42,6 +42,24 @@
     border-radius: 12px;
     overflow-x: auto;
 
+    // same scrollbar as .app__main, but horizontal so it has a height instead of a width
+    &::-webkit-scrollbar{
+      height: 10px;
+    }
+    &::-webkit-scrollbar-track{
+      background: transparent;
+    }
+    &::-webkit-scrollbar-thumb{
+      background-color: var(--scroll-thumb-color);
+      border-radius: 100px;
+      &:hover{
+        background-color: var(--scroll-thumb-color-hovered);
+      }
+      &:active{
+        background-color: var(--scroll-thumb-color-active);
+      }
+    }
+
     code{
       padding: 0;
       background: none;

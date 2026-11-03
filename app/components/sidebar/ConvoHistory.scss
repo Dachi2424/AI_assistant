@@ -4,14 +4,17 @@
   min-height: 0;
   overflow-y: auto;
   &::-webkit-scrollbar{
-    width: 5px;
+    width: 8px;
   }
   &::-webkit-scrollbar-thumb{
     background-color: var(--scroll-thumb-color);
     border-radius: 100px;
-  }
-  &::-webkit-scrollbar-thumb:hover{
-    background-color: rgb(160, 160, 160);
+    &:hover{
+      background-color: var(--scroll-thumb-color-hovered);
+    }
+    &:active{
+      background-color: var(--scroll-thumb-color-active);
+    }
   }
   &__convo-list{
     list-style: none;
@@ -43,7 +46,10 @@
     user-select: none;
     border-radius: 12px;
     &:hover{
-      background-color: var(--input-color);
+      background-color: rgba(59, 65, 81, .35);
+    }
+    &:active{
+      background-color: rgba(59, 65, 81, .5);
     }
   }
   &__show-more-text{

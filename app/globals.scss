@@ -27,11 +27,15 @@ resize: none;
 
 :root{
   --color-primary: rgb(91, 75, 223);
-  --color-secondary: black;
+  --color-secondary: rgb(17, 21, 28); 
+  // rgb(13, 16, 23)
   --chatbox-width: 60%;
-  --input-color: rgb(35, 35, 35);
+  --input-color: rgb(13, 16, 23);
+  // rgb(16, 20, 27)
   --sidebar-color: rgb(0, 0, 0);
-  --scroll-thumb-color: rgb(200, 200, 200)
+  --scroll-thumb-color: rgba(59, 65, 81, .9);
+  --scroll-thumb-color-hovered: rgb(69, 75, 91);
+  --scroll-thumb-color-active: rgb(79, 85, 101);
 }
 
 body{
@@ -48,6 +52,22 @@ body{
   min-width: 0;
   overflow-y: auto;
   padding-top: 46px;
+  &::-webkit-scrollbar{
+    width: 10px;
+  }
+  &::-webkit-scrollbar-track{
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb{
+    background-color: var(--scroll-thumb-color);
+    border-radius: 100px;
+    &:hover{
+      background-color: var(--scroll-thumb-color-hovered);
+    }
+    &:active{
+      background-color: var(--scroll-thumb-color-active);
+    }
+  }
 }
 
 /* HTML: <div class="loader"></div> */

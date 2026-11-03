@@ -5,14 +5,44 @@ import "./MessageBox.scss"
 import UserMessage from "./UserMessage"
 import SystemMessage from "./SystemMessage"
 import DraftCard from "../chatTools/DraftCard"
-import { Fragment, useEffect, useRef } from "react"
+import { Fragment, useCallback, useEffect, useRef } from "react"
 
 export default function MessageBox() {
   const {messages} = useChat()
   const ref = useRef<HTMLDivElement>(null)
+  const stickToBottom = useRef<boolean>(true)
+  const messageCount = useRef<number>(0)
 
   useEffect(() => {
-    ref.current?.scrollIntoView({behavior: "smooth"})
+    // the chat scrolls inside .app__main, not the window
+    const container = ref.current?.closest(".app__main")
+    if(!container) return
+
+
+    function handleScroll(){
+      const distanceFromBottom = container!.scrollHeight - container!.clientHeight - container!.scrollTop
+      stickToBottom.current = distanceFromBottom < 100
+    }
+    container.addEventListener("scroll", handleScroll)
+    return () => container.removeEventListener("scroll", handleScroll)
+  }, [])
+
+
+  // the revealed text keeps growing between message updates, so it has to be followed too
+  const followText = useCallback(() => {
+    if(stickToBottom.current) ref.current?.scrollIntoView({behavior: "auto"})
+  }, [])
+
+  useEffect(() => {
+    const isNewMessage = messages.length > messageCount.current
+    messageCount.current = messages.length
+
+    if(isNewMessage){
+      stickToBottom.current = true
+      ref.current?.scrollIntoView({behavior: "smooth"})
+    } else if(stickToBottom.current){
+      ref.current?.scrollIntoView({behavior: "auto"})
+    }
   }, [messages])
 
   // only the newest draft can still be approved; older pending ones are never shown
@@ -33,7 +63,12 @@ export default function MessageBox() {
           />
         ) : (
           <Fragment key={i}>
-            <SystemMessage content={message.content} loading={message.streaming && !message.content} />
+            <SystemMessage
+              content={message.content}
+              loading={message.streaming && !message.content}
+              animate={message.isNew}
+              onGrow={followText}
+            />
             {message.drafts?.map(draft => {
               const pending = !draft.status || draft.status === "pending" || draft.status === "working"
               const visible = !pending || (i === lastDraftIndex && !waitingForReply)

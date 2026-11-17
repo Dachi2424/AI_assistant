@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { verifyToken, createToken } from "@/lib/auth";
+import { verifyToken, createToken, createRefreshToken } from "@/lib/auth";
 
 
 export async function GET(){
@@ -16,12 +16,19 @@ export async function GET(){
 
     const payload = await verifyToken(refreshToken);
     const newAccessToken = await createToken(payload.userId as string)
+    // sliding expiry: the 7 days start over every time the session is refreshed,
+    // so only someone who stays away for a whole week gets logged out
+    const newRefreshToken = await createRefreshToken(payload.userId as string)
 
     const headers = new Headers();
 
     headers.append(
       "Set-Cookie",
       `accessToken=${newAccessToken}; HttpOnly; Path=/; Max-Age=900; SameSite=Lax`
+    )
+    headers.append(
+      "Set-Cookie",
+      `refreshToken=${newRefreshToken}; HttpOnly; Path=/; Max-Age=604800; SameSite=Lax`
     )
     return new Response("Access token refreshed", { headers })
 

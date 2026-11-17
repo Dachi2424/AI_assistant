@@ -3,6 +3,8 @@ export type StreamEvent =
   | { type: "meta", conversationId: string, createdAt: string }
   | { type: "title", title: string }
   | { type: "text", text: string }
-  | { type: "draft", draft: { id: string, to: string, subject: string, body: string } }
+  | { type: "draft", draft: { id: string, to: string, subject: string, body: string, needsPermission: boolean } }
+  | { type: "login", app: string, action: string }
+  | { type: "permission", app: string, action: string }
   | { type: "error", error: string }
   | { type: "done" }

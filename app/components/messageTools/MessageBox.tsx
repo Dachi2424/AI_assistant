@@ -5,10 +5,12 @@ import "./MessageBox.scss"
 import UserMessage from "./UserMessage"
 import SystemMessage from "./SystemMessage"
 import DraftCard from "../chatTools/DraftCard"
+import ReconnectNotice from "./ReconnectNotice"
+import { Lock } from "lucide-react"
 import { Fragment, useCallback, useEffect, useRef } from "react"
 
 export default function MessageBox() {
-  const {messages} = useChat()
+  const {user, messages, setMessages, conversationId, logIn, loginStatus, resumeReply} = useChat()
   const ref = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef<boolean>(true)
   const messageCount = useRef<number>(0)
@@ -27,6 +29,11 @@ export default function MessageBox() {
     return () => container.removeEventListener("scroll", handleScroll)
   }, [])
 
+
+  // the permission was given, so the notice under that message can go away
+  function clearPermissionNotice(index: number){
+    setMessages(prev => prev.map((message, i) => i === index ? {...message, missingPermission: undefined} : message))
+  }
 
   // the revealed text keeps growing between message updates, so it has to be followed too
   const followText = useCallback(() => {
@@ -69,6 +76,31 @@ export default function MessageBox() {
               animate={message.isNew}
               onGrow={followText}
             />
+            {message.needsLogin && !user && (
+              <div className="messagebox__reconnect">
+                <Lock size={16} />
+                <span>{message.loginFor ? "Log in with Google to let Deskhand use your Gmail." : "Log in with Google to keep chatting."}</span>
+                <button
+                  className="messagebox__reconnect-button"
+                  disabled={loginStatus !== "idle"}
+                  onClick={() => logIn("keep", message.loginFor)}
+                >
+                  {loginStatus === "waiting" ? "Waiting for Google..." : loginStatus === "saving" ? "Saving your chat..." : "Log in"}
+                </button>
+              </div>
+            )}
+            {message.missingPermission && (
+              <ReconnectNotice
+                url={`/api/google/permissions/${message.missingPermission.app}/${message.missingPermission.action}`}
+                text={`Deskhand needs access to ${message.missingPermission.action} your ${message.missingPermission.app === "gmail" ? "Gmail" : "Google account"}.`}
+                onReconnected={() => {
+                  clearPermissionNotice(i)
+                  // the user allowed it because the AI asked, so it answers again by itself
+                  if(conversationId) resumeReply(conversationId)
+                }}
+              />
+            )}
+
             {message.drafts?.map(draft => {
               const pending = !draft.status || draft.status === "pending" || draft.status === "working"
               const visible = !pending || (i === lastDraftIndex && !waitingForReply)

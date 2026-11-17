@@ -12,16 +12,9 @@ import type { StreamEvent } from "@/lib/streamEvents"
 
 
 export default function ChatInputBox() {
-  const {messages, setMessages, setConversationId, conversationId, setConversations} = useChat()
+  const {messages, setMessages, setConversationId, conversationId, setConversations, expireSession, registerResume} = useChat()
   const [text, setText] = useState<string>("")
   const [messageLoading, setMessageLoading] = useState<boolean>(false)
-  useEffect(() => {
-    const saved = localStorage.getItem("prompt")
-    if(saved){
-      setText(saved)
-      localStorage.removeItem("prompt")
-    }
-  }, [])
 
 
   async function handleSendPrompt(){
@@ -35,13 +28,22 @@ export default function ChatInputBox() {
       isNew: true
     }
 
+    // A saved conversation is loaded from the database by the server. A guest's chat isn't saved anywhere,
+    // so what is on screen is sent along (the server limits how much of it is used).
+    const history = conversationId ? undefined : messages.map(message => ({role: message.role, content: message.content}))
+
     setMessages(prev => ([...prev, newMessage]))
-    
+    await deliver(newMessage, text, conversationId, history)
+  }
+
+  // Sends the message and reads the reply. It takes everything it uses as arguments, so it can run again with the
+  // same message after the user logged back in.
+  async function deliver(newMessage: Message, text: string, conversationId: string | null, history: {role?: string, content: string}[] | undefined){
     function sendMessage(){
       return fetch("/api/chat", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ content: text, conversationId })
+        body: JSON.stringify({ content: text, conversationId, history })
       })
     }
     setMessageLoading(true)
@@ -53,11 +55,25 @@ export default function ChatInputBox() {
         try{
           await axios.get("/api/auth/refresh")
         } catch{
-          localStorage.setItem("prompt", text)
-          window.location.href = "/api/auth/google"
+          // the session is over. The message stays on screen unsent. After logging in it is sent again; as a guest
+          // the screen starts over and the message goes back into the input box
+          expireSession({
+            retry: () => deliver(newMessage, text, conversationId, history),
+            onGuest: () => setText(text)
+          })
           return;
         }
         res = await sendMessage()
+      }
+
+      // a guest used up their messages: the reason is shown as the reply, with the button to log in
+      if(res.status === 429){
+        const { error } = await res.json()
+        setMessages(prev => [
+          ...prev.map(message => message === newMessage ? {...message, sent: true} : message),
+          {role: "assistant", content: error, sent: true, isNew: true, needsLogin: true}
+        ])
+        return
       }
 
       if(!res.ok || !res.body) throw new Error("Failed to send the message")
@@ -72,6 +88,51 @@ export default function ChatInputBox() {
     } finally{
       setMessageLoading(false)
       setText("")
+    }
+  }
+
+  // The user logged in or allowed access because the AI asked for it. The server answers their last request again,
+  // so a new reply is written below the one that asked, without the user having to say it a second time.
+  async function writeAnswerAgain(conversationId: string){
+    function sendResume(){
+      return fetch("/api/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ conversationId, resume: true })
+      })
+    }
+    // takes the loader away again when no answer is coming
+    function dropLoader(){
+      setMessages(prev => prev.filter(message => !(message.streaming && !message.content)))
+    }
+    setMessageLoading(true)
+
+    // the empty bubble that shows the loader and that the reply is written into as it arrives. After a login it
+    // is already there, since saving the chat took a while
+    setMessages(prev => prev[prev.length - 1]?.streaming ? prev : [...prev, {role: "assistant", content: "", sent: true, streaming: true, isNew: true}])
+
+    try{
+      let res = await sendResume()
+
+      if(res.status === 401){
+        try{
+          await axios.get("/api/auth/refresh")
+        } catch{
+          dropLoader()
+          expireSession({retry: () => writeAnswerAgain(conversationId)})
+          return
+        }
+        res = await sendResume()
+      }
+
+      if(!res.ok || !res.body) throw new Error("Failed to write the answer")
+
+      await readStream(res.body)
+    } catch(err){
+      console.error(err)
+      dropLoader()
+    } finally{
+      setMessageLoading(false)
     }
   }
 
@@ -99,6 +160,10 @@ export default function ChatInputBox() {
         updateStreamingMessage(message => ({...message, drafts: [...(message.drafts ?? []), event.draft]}))
       } else if(event.type === "error"){
         updateStreamingMessage(message => ({...message, content: message.content + "\n\nSomething went wrong, please try again."}))
+      } else if(event.type === "login"){
+        updateStreamingMessage(message => ({...message, needsLogin: true, loginFor: {app: event.app, action: event.action}}))
+      } else if(event.type === "permission"){
+        updateStreamingMessage(message => ({...message, missingPermission: {app: event.app, action: event.action}}))
       }
     }
 
@@ -123,8 +188,11 @@ export default function ChatInputBox() {
     }
   }
 
-
-
+  // the login and the Allow access buttons are elsewhere, so this is how they ask for the answer to be written again
+  useEffect(() => {
+    registerResume(writeAnswerAgain)
+    return () => registerResume(null)
+  })
 
   return (
     <div className={`chat-box ${messages.length > 0 ? "chat-box--down" : ""}`}>

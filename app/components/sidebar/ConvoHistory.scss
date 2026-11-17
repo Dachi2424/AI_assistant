@@ -3,19 +3,6 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  &::-webkit-scrollbar{
-    width: 8px;
-  }
-  &::-webkit-scrollbar-thumb{
-    background-color: var(--scroll-thumb-color);
-    border-radius: 100px;
-    &:hover{
-      background-color: var(--scroll-thumb-color-hovered);
-    }
-    &:active{
-      background-color: var(--scroll-thumb-color-active);
-    }
-  }
   &__convo-list{
     list-style: none;
     display: flex;
@@ -45,6 +32,10 @@
     cursor: default;
     user-select: none;
     border-radius: 12px;
+    // one line per conversation, so every item has the same height
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     &:hover{
       background-color: rgba(59, 65, 81, .35);
     }
@@ -52,9 +43,30 @@
       background-color: rgba(59, 65, 81, .5);
     }
   }
-  &__show-more-text{
+  // looks like the conversation rows, only quieter
+  &__show-more{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 12px;
+    background-color: transparent;
+    color: gray;
+    font-size: 14px;
+    text-align: left;
     user-select: none;
     cursor: pointer;
-    margin-left: 20px;
+    &:hover:not(:disabled){
+      background-color: rgba(59, 65, 81, .35);
+      color: inherit;
+    }
+    &:disabled{
+      cursor: default;
+    }
+    .loader{
+      margin-left: 0;
+    }
   }
 }

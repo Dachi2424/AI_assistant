@@ -1,3 +1,10 @@
+// registered so the scrollbar color can be transitioned (see the scrollbar rules below)
+@property --scrollbar-color {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: transparent;
+}
+
 *{
   margin: 0;
   padding: 0;
@@ -52,15 +59,33 @@ body{
   min-width: 0;
   overflow-y: auto;
   padding-top: 46px;
-  &::-webkit-scrollbar{
-    width: 10px;
+}
+
+// Scrollbars are only visible while the mouse is over their container.
+// Browsers can't animate scrollbar styles directly, so the thumb takes its color from
+// --scrollbar-color, which can be transitioned on the container.
+.app__main,
+.history,
+.input__input,
+.system-message pre,
+.draft__textarea{
+  --scrollbar-color: transparent;
+  // leaving the container fades the scrollbar out
+  transition: --scrollbar-color .6s ease;
+
+  &:hover{
+    --scrollbar-color: var(--scroll-thumb-color);
+    // entering the container shows it right away
+    transition: none;
   }
   &::-webkit-scrollbar-track{
     background: transparent;
+    cursor: default;
   }
   &::-webkit-scrollbar-thumb{
-    background-color: var(--scroll-thumb-color);
+    background-color: var(--scrollbar-color);
     border-radius: 100px;
+    cursor: default;
     &:hover{
       background-color: var(--scroll-thumb-color-hovered);
     }
@@ -68,6 +93,26 @@ body{
       background-color: var(--scroll-thumb-color-active);
     }
   }
+}
+
+.app__main,
+.system-message pre{
+  &::-webkit-scrollbar{
+    width: 10px;
+    height: 10px;
+  }
+}
+
+.history::-webkit-scrollbar{
+  width: 8px;
+}
+
+.input__input::-webkit-scrollbar{
+  width: 5px;
+}
+
+.draft__textarea::-webkit-scrollbar{
+  width: 8px;
 }
 
 /* HTML: <div class="loader"></div> */
@@ -84,4 +129,72 @@ body{
 }
 @keyframes l13{ 
   100%{transform: rotate(1turn)}
+}
+
+// a box in the middle of the page, over a dark layer. Used to ask the user something before going on
+.dialog{
+  &__overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, .6);
+  }
+  &__box{
+    width: min(400px, calc(100% - 40px));
+    padding: 24px;
+    border-radius: 16px;
+    background-color: var(--color-secondary);
+    border: 1px solid rgba(255, 255, 255, .08);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  &__title{
+    font-size: 18px;
+    font-weight: 600;
+  }
+  &__text{
+    opacity: .75;
+    line-height: 1.4;
+  }
+  &__error{
+    color: #f87171;
+    font-size: 14px;
+  }
+  &__actions{
+    margin-top: 8px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  &__button{
+    padding: 8px 18px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, .2);
+    background-color: transparent;
+    cursor: pointer;
+    transition: .15s;
+
+    &:hover:not(:disabled){
+      background-color: rgba(255, 255, 255, .08);
+    }
+
+    &:disabled{
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    &--primary{
+      border-color: var(--color-primary);
+      background-color: var(--color-primary);
+
+      &:hover:not(:disabled){
+        background-color: var(--color-primary);
+        filter: brightness(1.1);
+      }
+    }
+  }
 }

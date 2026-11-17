@@ -1,16 +1,11 @@
 import { cookies } from "next/headers"
-import { getCurrentUser } from "@/lib/getCurrentUser";
 
 export async function DELETE(){
   try{
-    try{
-      await getCurrentUser()
-    } catch{
-      return Response.json({error: "Unauthorized"}, {status: 401})
-    }
+    // no login check: logging out has to work even when the access token has already expired
     const cookieStore = await cookies();
-    cookieStore.delete("refreshToken") 
-    cookieStore.delete("accessToken") 
+    cookieStore.delete("refreshToken")
+    cookieStore.delete("accessToken")
 
     return Response.json(
       { message: "Logged out successfully" },

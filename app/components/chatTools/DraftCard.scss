@@ -8,7 +8,10 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-
+  &__gmail-icon{
+    user-select: none;
+    -webkit-user-drag: none;
+  }
   &__header{
     display: flex;
     align-items: center;
@@ -64,6 +67,27 @@
   &__error{
     font-size: 0.9rem;
     color: rgb(255, 120, 120);
+  }
+
+  &__permission{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+
+    span{
+      flex: 1;
+      min-width: 200px;
+    }
+    .draft__button{
+      white-space: nowrap;
+      text-decoration: none;
+    }
   }
 
   &__actions{

@@ -23,3 +23,11 @@ THE BIGGEST BUG:
 - if a user doesn't give permission to specific tools the gemini just errors if user asks for
 unsupported tasks without user knowing the reason. i have to ask for permission from a user 
 if they didnt permit google to access those tools
+
+-the user is redirected to consent screen when my app's session expires,
+we dont want user to do that. but i dont know if i should add "sign in as a guest" either
+because we dont want the convo history to be wiped. so im not sure what to do
+
+
+INTERESTING FEATURE TO ADD:
+1) suggest log in with google with a little popup div on the upper right corner saying "Continue with დაჩი"

@@ -6,7 +6,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 50px 0px 20px;
+  padding: 50px 0px 10px;
 
   &--hide{
     width: 0;
@@ -18,5 +18,94 @@
     display: flex;
     align-items: center;
     gap: 6px;
+  }
+
+  // the logged in user, at the bottom under the conversation titles
+  &__profile{
+    flex-shrink: 0;
+    padding: 8px 12px 0;
+    border-top: 1px solid rgba(255, 255, 255, .08);
+  }
+  // the menu is placed against this, which is exactly as big as the button
+  &__profile-anchor{
+    position: relative;
+  }
+  &__profile-button{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 4px 8px;
+    border: none;
+    border-radius: 12px;
+    background-color: transparent;
+    cursor: pointer;
+    text-align: left;
+    &:hover{
+      background-color: rgba(59, 65, 81, .35);
+    }
+    &:active{
+      background-color: rgba(59, 65, 81, .5);
+    }
+  }
+  &__avatar{
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+
+    &--initial{
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      background-color: var(--color-primary);
+    }
+  }
+  &__profile-name{
+    font-size: 14px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  // points down while the menu is closed, and up while it is open
+  &__chevron{
+    margin-left: auto;
+    flex-shrink: 0;
+    color: gray;
+
+    &--open{
+      transform: rotate(180deg);
+    }
+  }
+  // opens upwards, because the profile is at the bottom of the sidebar
+  &__menu{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 4px);
+    padding: 6px;
+    border-radius: 12px;
+    background-color: rgb(24, 29, 40);
+    border: 1px solid rgba(255, 255, 255, .08);
+  }
+  &__menu-item{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: transparent;
+    cursor: pointer;
+    text-align: left;
+    &:hover{
+      background-color: rgba(255, 255, 255, .08);
+    }
   }
 }

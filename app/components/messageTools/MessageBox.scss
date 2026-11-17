@@ -2,4 +2,46 @@
   width: 100%;
   flex: 1;
   padding-bottom: 24px;
+
+  // same look as the permission notice on the draft card
+  &__reconnect{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+
+    span{
+      flex: 1;
+      min-width: 200px;
+    }
+  }
+
+  &__reconnect-button{
+    padding: 8px 18px;
+    border: none;
+    border-radius: 999px;
+    background-color: var(--color-primary);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: .15s;
+
+    &:disabled{
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    &:not(:disabled):hover{
+      filter: brightness(1.15);
+    }
+  }
+
+  &__reconnect-error{
+    flex-basis: 100%;
+    color: rgb(255, 120, 120);
+  }
 }

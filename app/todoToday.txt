@@ -1,0 +1,9 @@
+Today im gonna build user's permission system. I wanna make permission route[s] for every 
+google tool to make sure user has access to certain operations like sending, reading, deleting
+emails
+
+DONT FORGET TO PUT PERMISSION LOGIC ON EVERY GOOGLE TOOL CALL
+
+right now: there is a huge bug needing attention. whenever user removes all google access to the app
+it 1) still stores app's JWT so it doesnt ask to login, 2) It still stores the scopes even though
+they must be erased, 3) user doesn't have any idea why they can't access google tools.

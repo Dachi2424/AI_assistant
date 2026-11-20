@@ -157,9 +157,15 @@ const streamHeaders = {
 
 // What the AI is told about who it is talking to, on every request. Without it the AI only sees the chat messages
 // and knows nothing about the person, so it would go looking in their Gmail for things like their own address.
+// Who the assistant itself is. Without it the model introduces itself as Gemini.
+const ASSISTANT_IDENTITY = "You are Deskhand, an assistant that helps people with their Google account (right now: reading their Gmail and drafting emails they send). Your name is Deskhand: when asked who you are, answer as Deskhand. If someone asks which AI model you run on, say you are Deskhand, powered by Google's Gemini."
+
 function buildSystemInstruction(user: WithId<Document> | null){
   if(!user){
-    return "The user is a guest: they are not logged in, so nothing is known about them, and their Gmail can't be used until they log in."
+    return [
+      ASSISTANT_IDENTITY,
+      "The user is a guest: they are not logged in, so nothing is known about them, and their Gmail can't be used until they log in."
+    ].join("\n\n")
   }
 
   const facts = [`Name: ${user.name}`, `Email address: ${user.email}`]
@@ -167,6 +173,8 @@ function buildSystemInstruction(user: WithId<Document> | null){
   if(user.locale) facts.push(`Language of their Google account: ${user.locale}`)
 
   return [
+    ASSISTANT_IDENTITY,
+    "",
     "The user is logged in with their Google account. This is what is known about them:",
     ...facts,
     "You already know this. Never ask for it, and never say you can't access it. Answer questions about it directly (for example \"what is my email address?\") without using any Gmail tool, and use it when it helps, for example the user's own address as the recipient when they say \"send it to myself\". Don't bring it up when it isn't relevant."

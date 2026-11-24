@@ -6,6 +6,8 @@ import UserMessage from "./UserMessage"
 import SystemMessage from "./SystemMessage"
 import DraftCard from "../chatTools/DraftCard"
 import ReconnectNotice from "./ReconnectNotice"
+import FileCard from "./FileCard"
+import GeneratedImage from "./GeneratedImage"
 import { Lock } from "lucide-react"
 import { Fragment, useCallback, useEffect, useRef } from "react"
 
@@ -64,6 +66,7 @@ export default function MessageBox() {
           <UserMessage
             key={i}
             content={message.content}
+            attachments={message.attachments}
             createdAt={message.createdAt}
             sent={message.sent}
             isNew={message.isNew}
@@ -76,6 +79,8 @@ export default function MessageBox() {
               animate={message.isNew}
               onGrow={followText}
             />
+            {message.images?.map(image => <GeneratedImage key={image.id} image={image} />)}
+            {message.files?.map((file, fileIndex) => <FileCard key={fileIndex} file={file} />)}
             {message.needsLogin && !user && (
               <div className="messagebox__reconnect">
                 <Lock size={16} />

@@ -1,6 +1,7 @@
 import { connectToDatabase } from "@/lib/db";
 import { getCurrentUser } from "@/lib/getCurrentUser";
 import { GoogleGenAI } from "@google/genai";
+import { MAX_CREATED_FILES, cleanCreatedFile, type CreatedFile } from "@/lib/createdFiles";
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -9,7 +10,16 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 const MAX_IMPORTED_MESSAGES = 20
 const MAX_MESSAGE_LENGTH = 8000
 
-type ImportedMessage = { role?: unknown, content?: unknown }
+type ImportedMessage = { role?: unknown, content?: unknown, files?: unknown }
+
+// the files the AI created in the chat. The browser can send anything, so each is checked like when it was created
+function importedFiles(files: unknown): CreatedFile[] {
+  if(!Array.isArray(files)) return []
+  return files.slice(0, MAX_CREATED_FILES).flatMap(file => {
+    const checked = cleanCreatedFile(file?.name, file?.content)
+    return "file" in checked ? [checked.file] : []
+  })
+}
 
 // Saves the chat a guest had on screen as a conversation of the account they just logged in to
 export async function POST(request: Request){
@@ -31,7 +41,8 @@ export async function POST(request: Request){
       .slice(-MAX_IMPORTED_MESSAGES)
       .map(message => ({
         role: message.role as "user" | "assistant",
-        content: (message.content as string).slice(0, MAX_MESSAGE_LENGTH)
+        content: (message.content as string).slice(0, MAX_MESSAGE_LENGTH),
+        files: message.role === "assistant" ? importedFiles(message.files) : []
       }))
 
     // cutting the chat can leave an answer first, but a conversation has to start with the user
@@ -58,12 +69,13 @@ export async function POST(request: Request){
       userId: user._id,
       role: message.role,
       content: message.content,
+      ...(message.files.length > 0 && { files: message.files }),
       createdAt: new Date(start + i)
     })))
 
     // a failed title must not lose the chat that was just saved
     const title = await ai.models.generateContent({
-      model: "gemini-3.6-flash",
+      model: "gemini-3.8-flash",
       contents: imported[0].content,
       config: {
         systemInstruction: "generate maximum of 8 words title for the content provided for you. Do not add anything extra"

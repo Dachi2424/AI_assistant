@@ -4,11 +4,13 @@ import React, { SetStateAction, useRef, useLayoutEffect } from "react"
 import "./Input.scss"
 
 export default function Input(
-  {text, setText, handleSendPrompt}: 
+  {text, setText, handleSendPrompt, hasFiles}:
   {
-    text: string, 
+    text: string,
     setText: React.Dispatch<SetStateAction<string>>,
-    handleSendPrompt: () => void
+    handleSendPrompt: () => void,
+    // files are attached, so a message can be sent without any text
+    hasFiles: boolean
   }) {
   
   const ref = useRef<HTMLTextAreaElement>(null)
@@ -37,7 +39,7 @@ export default function Input(
         onKeyDown={e => {
           if(e.key === "Enter" && !e.shiftKey){
             e.preventDefault()
-            if(text.trim()) handleSendPrompt()
+            if(text.trim() || hasFiles) handleSendPrompt()
           }
         }}
       />

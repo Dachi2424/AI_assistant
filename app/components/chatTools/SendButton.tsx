@@ -4,10 +4,12 @@ import "./SendButton.scss"
 import { ArrowUp } from "lucide-react"
 
 export default function SendButton(
-  {text, messageLoading, handleSendPrompt} : 
+  {text, hasFiles, messageLoading, handleSendPrompt} :
   {
-    text: string, 
-    messageLoading: boolean, 
+    text: string,
+    // files are attached, so a message can be sent without any text
+    hasFiles: boolean,
+    messageLoading: boolean,
     handleSendPrompt: () => void
 }) {
 
@@ -18,7 +20,7 @@ export default function SendButton(
   return (
     <button 
       className="button"
-      disabled={!text || messageLoading}  
+      disabled={(!text && !hasFiles) || messageLoading}
       onClick={handleSendPrompt}
     >
       {!messageLoading ? (

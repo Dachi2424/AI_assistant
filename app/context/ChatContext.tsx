@@ -3,6 +3,8 @@
 import React, { ReactNode, useState, useEffect, useRef, createContext, SetStateAction } from "react";
 import axios from "axios";
 import useGooglePopup from "@/app/hooks/useGooglePopup";
+import { describeAttachments } from "@/lib/attachments";
+import type { CreatedFile } from "@/lib/createdFiles";
 
 export type AppUser = {
   name: string,
@@ -21,9 +23,20 @@ export type Draft = {
   needsPermission?: boolean
 }
 
+// A file attached to a message. A saved file has an id and is shown from the server. One that was just picked in this
+// browser has a previewUrl instead. A guest's file has neither after a reload, so only its name is left.
+export type MessageAttachment = {
+  id?: string,
+  name: string,
+  type: string,
+  size: number,
+  previewUrl?: string
+}
+
 export type Message = {
   role?: "user" | "assistant",
   content: string,
+  attachments?: MessageAttachment[],
   createdAt?: string,
   sent: boolean,
   // only set on messages created in this session, so loaded conversations don't animate
@@ -31,6 +44,10 @@ export type Message = {
   // true while the assistant's reply is still arriving
   streaming?: boolean,
   drafts?: Draft[],
+  // the files the AI created in this answer, for the user to download
+  files?: CreatedFile[],
+  // the pictures the AI made in this answer. They are saved with the account and shown from the server
+  images?: MessageAttachment[],
   // a guest asked for something that needs Gmail, so they have to log in first
   needsLogin?: boolean,
   // the Gmail permission that request needs, asked for together with the login
@@ -181,7 +198,8 @@ export default function ChatProvider({children}: {children: ReactNode}) {
         setSavingChat(true)
         try{
           const saved = await axios.post("/api/conversations/import", {
-            messages: messages.map(message => ({role: message.role, content: message.content}))
+            // the files can't come along, so the chat keeps their names
+            messages: messages.map(message => ({role: message.role, content: describeAttachments(message.content, message.attachments), files: message.files}))
           })
           if(afterLogin.current === "newChat"){
             setMessages([])
@@ -263,8 +281,14 @@ export default function ChatProvider({children}: {children: ReactNode}) {
         return
       }
 
-      // streaming and isNew only describe what is happening right now
-      const toSave = messages.map(message => ({...message, streaming: false, isNew: false}))
+      // streaming and isNew only describe what is happening right now. A previewUrl stops working after a reload,
+      // so only the names of the files are kept
+      const toSave = messages.map(message => ({
+        ...message,
+        streaming: false,
+        isNew: false,
+        attachments: message.attachments?.map(attachment => ({name: attachment.name, type: attachment.type, size: attachment.size}))
+      }))
       sessionStorage.setItem(GUEST_CHAT_KEY, JSON.stringify(toSave))
     } catch{
       // storage can be blocked, the chat just won't survive a reload then

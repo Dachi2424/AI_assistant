@@ -24,6 +24,39 @@
   &--enter{
     animation: messageEnter .3s ease-out;
   }
+  // the attached files, above the text
+  &__files{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  &__image{
+    display: block;
+    max-width: 220px;
+    max-height: 220px;
+    border-radius: 12px;
+    object-fit: cover;
+  }
+  &__file{
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    text-decoration: none;
+    border-radius: 12px;
+    background-color: var(--input-color);
+  }
+  &__file-name{
+    min-width: 0;
+    max-width: 220px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
   &__container{
     width: 100%;
     background-color: var(--input-color);

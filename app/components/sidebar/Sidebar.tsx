@@ -84,7 +84,7 @@ export default function Sidebar() {
         className="sidebar__new-chat-button"
         onClick={handleNewChat}
       >
-        <Plus size={20}/>
+        <Plus size={18}/>
         <span className="sidebar__new-chat-text">New Chat</span>
       </span>
       {/* the pictures and files the AI made for this account; a guest has none */}
@@ -93,7 +93,7 @@ export default function Sidebar() {
           className={`sidebar__new-chat-button sidebar__library-button ${pathname === "/library" ? "sidebar__library-button--active" : ""}`}
           onClick={() => router.push("/library")}
         >
-          <Library size={20}/>
+          <Library size={18}/>
           <span className="sidebar__new-chat-text">Library</span>
         </span>
       )}

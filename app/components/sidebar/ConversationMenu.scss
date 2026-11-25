@@ -1,0 +1,33 @@
+// the dropdown of a conversation, placed on the screen by position (see ConversationMenu.tsx)
+.conversation-menu{
+  position: fixed;
+  z-index: 50;
+  // The header it is shown from doesn't take clicks itself (so it doesn't block the page under it), and what is inside
+  // it inherits that. Without this the menu can't be clicked.
+  pointer-events: auto;
+  width: 160px;
+  padding: 6px;
+  border-radius: 12px;
+  background-color: rgb(24, 29, 40);
+  border: 1px solid rgba(255, 255, 255, .08);
+
+  &__item{
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: transparent;
+    cursor: pointer;
+    text-align: left;
+    &:hover{
+      background-color: rgba(255, 255, 255, .08);
+    }
+    &--danger, &--danger *{
+      color: rgb(255, 120, 120);
+    }
+  }
+}

@@ -10,9 +10,106 @@
   justify-content: space-between;
   padding: 0 20px;
   pointer-events: none;
+
+  // The bar itself: a solid color, so the messages scrolling under it are hidden and don't show through. With the
+  // sidebar open it starts where the sidebar ends (270px), because the sidebar has its own color above that
+  &::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    box-sizing: border-box;
+    background-color: var(--color-secondary);
+    pointer-events: none;
+  }
+  &--sidebar-open::before{
+    left: 270px;
+  }
+  // a line under it, once there is a title and the bar has something to separate from the chat. The same as the line on
+  // the right of the sidebar
+  &--titled::before{
+    border-bottom: 2px solid #010102;
+  }
+
   &__panel-icon{
     cursor: pointer;
     pointer-events: auto;
+  }
+
+  // The title of the chat. Closed sidebar: right after the icon (20px of padding + 16px icon + a gap). Open sidebar: at
+  // the left edge of the chat, which is where the sidebar (270px wide) ends
+  &__title-area{
+    position: absolute;
+    left: 48px;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    max-width: min(420px, 45vw);
+    &--sidebar-open{
+      left: 290px;
+    }
+  }
+  &__title, &__rename{
+    pointer-events: auto;
+    max-width: 100%;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+  &__title{
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 0 0 0 12px;
+    cursor: default;
+    // the box has its own padding, so it starts where the title text was
+    &--renaming{
+      padding-left: 0;
+    }
+  }
+  // a long title is cut with "…" and the arrow always stays
+  &__title-text{
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    user-select: none;
+    // it can be clicked to rename it, so the cursor is the one of a text box
+    cursor: text;
+    pointer-events: auto;
+  }
+  // the arrow is the button that opens the menu
+  &__chevron-button{
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background-color: transparent;
+    pointer-events: auto;
+    cursor: pointer;
+    transition: background-color .15s;
+    &:hover{
+      background-color: rgba(59, 65, 81, .35);
+    }
+  }
+  &__chevron{
+    color: gray;
+    &--open{
+      transform: rotate(180deg);
+    }
+  }
+  // its width is set by the page (see Header.tsx). There is no room on the right, because the check mark follows right
+  // after the text, where the arrow was
+  &__rename{
+    padding: 6px 0 6px 11px;
+    border: 1px solid rgba(255, 255, 255, .25);
+    background-color: var(--color-secondary);
   }
   &__button{
     padding: 6px 16px;

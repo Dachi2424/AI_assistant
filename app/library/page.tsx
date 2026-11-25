@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import axios, { isAxiosError } from "axios"
 import { ChevronLeft, ChevronRight, Download, FileText, MessageSquare, X } from "lucide-react"
 import useChat from "../context/useChat"
@@ -15,7 +15,8 @@ type LibraryItem = {
   key: string,
   name: string,
   type: string,
-  conversationId: string,
+  // null when the conversation was deleted and only the file was kept
+  conversationId: string | null,
   imageId?: string,
   content?: string
 }
@@ -31,6 +32,10 @@ export default function Library() {
   const [tab, setTab] = useState<Tab>("all")
   const [lists, setLists] = useState<Record<Tab, List>>({ all: EMPTY_LIST, images: EMPTY_LIST, files: EMPTY_LIST })
   const [loading, setLoading] = useState<boolean>(false)
+  // Which lists are being loaded right now. A ref, because it has to be known at once: two loads can start in the same
+  // moment (the page starts twice while developing, and again when it is known who the user is), before the state of
+  // the first one is there to say that it is running
+  const loadingNow = useRef<Record<Tab, boolean>>({ all: false, images: false, files: false })
   // which item of the current list is open, if any
   const [viewing, setViewing] = useState<number | null>(null)
 
@@ -55,18 +60,26 @@ export default function Library() {
   }
 
   async function load(kind: Tab){
-    if(loading) return
+    if(loadingNow.current[kind]) return
+    loadingNow.current[kind] = true
     setLoading(true)
     try{
       const data = await request(kind, lists[kind].nextSkip)
       if(!data) return
       setLists(prev => ({
         ...prev,
-        [kind]: { items: [...prev[kind].items, ...data.items], nextSkip: data.nextSkip, hasMore: data.hasMore, loaded: true }
+        [kind]: {
+          // an item that is already in the list is never added again
+          items: [...prev[kind].items, ...(data.items as LibraryItem[]).filter(item => !prev[kind].items.some(known => known.key === item.key))],
+          nextSkip: data.nextSkip,
+          hasMore: data.hasMore,
+          loaded: true
+        }
       }))
     } catch(err){
       console.error(err)
     } finally{
+      loadingNow.current[kind] = false
       setLoading(false)
     }
   }
@@ -171,9 +184,12 @@ export default function Library() {
             >
               <Download size={16} /> Download
             </button>
-            <button className="library__action" onClick={() => openConversation(current.conversationId)}>
-              <MessageSquare size={16} /> Open in chat
-            </button>
+            {/* a file whose conversation was deleted has no chat to open */}
+            {current.conversationId && (
+              <button className="library__action" onClick={() => current.conversationId && openConversation(current.conversationId)}>
+                <MessageSquare size={16} /> Open in chat
+              </button>
+            )}
             <button className="library__action library__action--icon" aria-label="Close" onClick={() => setViewing(null)}>
               <X size={18} />
             </button>

@@ -63,7 +63,8 @@ export async function GET(request: Request){
     const items = rows.slice(0, PAGE_SIZE).map(row => ({
       ...row.items,
       key: row.items.imageId ?? `${row._id}-${row.order}`,
-      conversationId: row.conversationId.toString(),
+      // null when the conversation was deleted and only its files were kept
+      conversationId: row.conversationId?.toString() ?? null,
       createdAt: row.createdAt
     }))
 

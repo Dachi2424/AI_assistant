@@ -13,11 +13,11 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 8px 0;
   }
   &__recents-text{
     color: gray;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
     user-select: none;
   }
@@ -27,29 +27,101 @@
       stroke: rgb(100, 100, 100);
     }
   }
+
+  // "Recents" is a button that folds the list
+  &__fold{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    &:hover .history__recents-text, &:hover .history__chevron{
+      color: #cfcfcf;
+    }
+  }
+  &__chevron{
+    color: gray;
+    &--folded{
+      transform: rotate(-90deg);
+    }
+  }
+
+  // folding is instant: the list is simply not there
+  &__collapse--folded{
+    display: none;
+  }
+
   &__list{
-    padding: 10px 20px;
+    // A fixed height, so a row is just as tall while its title is being renamed and the rows below it stay in place
+    // (it is the height of the three dots button plus the padding)
+    height: 36px;
+    padding: 5px 8px 5px 20px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
     cursor: default;
     user-select: none;
     border-radius: 12px;
-    // one line per conversation, so every item has the same height
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    &:hover{
+    &:hover, &--menu-open{
       background-color: rgba(59, 65, 81, .35);
     }
     &:active{
       background-color: rgba(59, 65, 81, .5);
     }
+    // the three dots only show for the row the mouse is on, or whose menu is open
+    &:hover .history__dots, &--menu-open .history__dots{
+      opacity: 1;
+    }
   }
+  // one line per conversation, so every item has the same height
+  &__title{
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  &__rename{
+    flex: 1;
+    min-width: 0;
+    // taller than the row's text, so it has room to breathe; the negative margins keep the row from growing much
+    padding: 7px 10px;
+    margin: -5px 0 -5px -10px;
+    font-size: inherit;
+    border: 1px solid rgba(255, 255, 255, .25);
+    border-radius: 8px;
+    background-color: rgba(0, 0, 0, .25);
+  }
+  &__dots{
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: gray;
+    opacity: 0;
+    cursor: pointer;
+    &:hover{
+      color: white;
+      background-color: rgba(255, 255, 255, .1);
+    }
+  }
+
   // looks like the conversation rows, only quieter
   &__show-more{
     width: 100%;
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 10px 20px;
+    padding: 5px 20px;
     border: none;
     border-radius: 12px;
     background-color: transparent;

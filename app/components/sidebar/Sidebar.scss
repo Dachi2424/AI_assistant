@@ -12,20 +12,28 @@
     width: 0;
     padding: 0;
   }
+  // New Chat and Library: rows like the conversation titles below, with the same hover
   &__new-chat-button{
     cursor: pointer;
-    padding-left: 20px;
+    padding: 7px 20px;
+    font-size: 14px;
+    border-radius: 12px;
+    user-select: none;
     display: flex;
     align-items: center;
     gap: 6px;
+    &:hover{
+      background-color: rgba(59, 65, 81, .35);
+    }
+    &:active{
+      background-color: rgba(59, 65, 81, .5);
+    }
   }
-
-  // same look as New Chat, right under it
+  // right under New Chat; it stays lit while the library is open
   &__library-button{
-    margin-top: 14px;
-    opacity: .85;
-    &:hover, &--active{
-      opacity: 1;
+    margin-top: 2px;
+    &--active{
+      background-color: rgba(59, 65, 81, .35);
     }
   }
 

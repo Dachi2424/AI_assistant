@@ -137,6 +137,9 @@ body{
     position: fixed;
     inset: 0;
     z-index: 10;
+    // the header doesn't take clicks (so it doesn't block the page under it) and what is inside it inherits that, and
+    // some dialogs are shown from inside the header
+    pointer-events: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -151,6 +154,10 @@ body{
     display: flex;
     flex-direction: column;
     gap: 10px;
+    // for a dialog with several buttons, which need to fit in one row
+    &--wide{
+      width: min(560px, calc(100% - 40px));
+    }
   }
   &__title{
     font-size: 18px;
@@ -169,6 +176,14 @@ body{
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+    // for a dialog with more buttons than fit in one row
+    &--wrap{
+      flex-wrap: wrap;
+    }
+    // the buttons in the middle instead of on the right
+    &--center{
+      justify-content: center;
+    }
   }
   &__button{
     padding: 8px 18px;

@@ -4,6 +4,7 @@ import React, { ReactNode, useState, useEffect, useRef, createContext, SetStateA
 import axios, { isAxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import useGooglePopup from "@/app/hooks/useGooglePopup";
+import { withSession } from "@/lib/withSession";
 import { describeAttachments } from "@/lib/attachments";
 import type { CreatedFile } from "@/lib/createdFiles";
 
@@ -64,7 +65,9 @@ export type Message = {
 export type Conversation = {
   title?: string,
   createdAt: string,
-  _id: string
+  _id: string,
+  // when it was pinned, if it is. A pinned conversation is shown above the recent ones instead of among them
+  pinnedAt?: string
 }
 
 
@@ -107,7 +110,13 @@ type ChatContextType = {
   showSidebar: boolean,
   setShowSidebar: React.Dispatch<SetStateAction<boolean>>,
   conversations: Conversation[],
-  setConversations: React.Dispatch<SetStateAction<Conversation[]>>
+  setConversations: React.Dispatch<SetStateAction<Conversation[]>>,
+  // Loads the next page of the conversation list (the first one, with the pinned ones, when `reset` is true). The list
+  // is shown in the sidebar, but the header over a chat needs to reload it too, after a conversation is unpinned
+  loadConversations: (reset?: boolean) => Promise<void>,
+  // false once every conversation is loaded
+  hasMoreConversations: boolean,
+  loadingConversations: boolean
 }
 
 
@@ -122,6 +131,9 @@ export default function ChatProvider({children}: {children: ReactNode}) {
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [showSidebar, setShowSidebar] = useState<boolean>(true)
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [hasMoreConversations, setHasMoreConversations] = useState<boolean>(false)
+  const [loadingConversations, setLoadingConversations] = useState<boolean>(false)
+  const loadingConversationsNow = useRef<boolean>(false)
   const guestChatRestored = useRef<boolean>(false)
   const [savingChat, setSavingChat] = useState<boolean>(false)
   // what to do with the guest's chat after the login, remembered from the click until the popup answers
@@ -145,6 +157,32 @@ export default function ChatProvider({children}: {children: ReactNode}) {
     // several things can fail at once, so what is already waiting is kept unless the new one brings its own
     expiredActions.current = {...expiredActions.current, ...actions}
     setSessionExpired(true)
+  }
+
+  async function loadConversations(reset: boolean = false){
+    // a guest has no saved conversations to load. A ref says at once that a load is running, because two can start in
+    // the same moment (and would add the same page twice)
+    if(loadingConversationsNow.current || !user) return
+    loadingConversationsNow.current = true
+    setLoadingConversations(true)
+    // the pinned ones come with the first page, so only the recent ones are counted
+    const skip = reset ? 0 : conversations.filter(convo => !convo.pinnedAt).length
+    try{
+      const res = await withSession(() => axios.get("/api/conversations", {params: {skip}}), loadConversations, expireSession)
+      if(!res) return
+
+      const { conversations: page, pinned, hasMore } = res.data as { conversations: Conversation[], pinned: Conversation[], hasMore: boolean }
+      setHasMoreConversations(hasMore)
+      setConversations(prev => skip === 0
+        ? [...pinned, ...page]
+        : [...prev, ...page.filter(convo => !prev.some(known => known._id === convo._id))]
+      )
+    } catch(err){
+      console.error(err)
+    } finally{
+      loadingConversationsNow.current = false
+      setLoadingConversations(false)
+    }
   }
 
   async function openConversation(convoId: string){
@@ -336,7 +374,7 @@ export default function ChatProvider({children}: {children: ReactNode}) {
   return (
     <ChatContext.Provider
       value={
-        {user, setUser, logIn, loginStatus: savingChat ? "saving" : waitingForLogin ? "waiting" : "idle", resumeReply, registerResume, sessionExpired, expireSession, continueAsGuest, messages, setMessages, openConversation, conversationId, setConversationId, showSidebar, setShowSidebar, conversations, setConversations}}
+        {user, setUser, logIn, loginStatus: savingChat ? "saving" : waitingForLogin ? "waiting" : "idle", resumeReply, registerResume, sessionExpired, expireSession, continueAsGuest, messages, setMessages, openConversation, conversationId, setConversationId, showSidebar, setShowSidebar, conversations, setConversations, loadConversations, hasMoreConversations, loadingConversations}}
     >
       {children}
     </ChatContext.Provider>

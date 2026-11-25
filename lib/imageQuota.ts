@@ -3,7 +3,7 @@ import type { ObjectId } from "mongodb";
 
 // How many pictures one logged-in user can have the AI make: a limit of its own, besides the cents budget (lib/usageBudget.ts),
 // because a picture costs far more than a message and would otherwise take most of the budget.
-export const IMAGE_LIMIT = 50
+export const IMAGE_LIMIT = 3
 const IMAGE_WINDOW_HOURS = 8
 
 // What one picture costs. Pictures are priced per image, not per token like the text, so it is a fixed amount.

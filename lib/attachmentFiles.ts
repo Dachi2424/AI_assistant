@@ -26,6 +26,14 @@ export async function saveAttachment(db: Db, userId: ObjectId, file: { name: str
   }
 }
 
+// Deletes a file. Nothing happens when there is no such file or it belongs to somebody else.
+export async function deleteAttachment(db: Db, id: ObjectId, userId: ObjectId){
+  const bucket = bucketOf(db)
+
+  const [file] = await bucket.find({ _id: id, "metadata.userId": userId }).toArray()
+  if(file) await bucket.delete(id)
+}
+
 // null when there is no such file or it belongs to somebody else
 export async function readAttachment(db: Db, id: ObjectId, userId: ObjectId){
   const bucket = bucketOf(db)

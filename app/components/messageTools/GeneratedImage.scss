@@ -23,42 +23,36 @@
   // a square where the picture will be: slowly moving colours behind a soft sweep of light
   &__placeholder{
     position: relative;
-    width: min(100%, 420px);
+    // A fixed width: the box around it takes the size of what is inside, so a width in % had nothing to be a % of
+    // and the square shrank to almost nothing
+    width: 420px;
+    max-width: 100%;
     aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
     border-radius: 14px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(255, 255, 255, 0.04);
+    // the same dark colours as the input box and the scrollbars
+    background-color: var(--input-color);
 
-    // the colours
+    // a soft glow in the middle that slowly gets brighter and fainter, without moving
     &::before{
       content: "";
       position: absolute;
-      inset: -50%;
-      background: conic-gradient(from 0deg, transparent 0%, rgba(91, 75, 223, 0.55) 20%, transparent 40%, rgba(90, 170, 255, 0.35) 65%, transparent 85%);
-      filter: blur(48px);
-      animation: generated-image-spin 4s linear infinite;
+      inset: 0;
+      background: radial-gradient(circle at center, var(--scroll-thumb-color) 0%, transparent 70%);
+      animation: generated-image-breathe 3s ease-in-out infinite alternate;
     }
     // the sweep of light
     &::after{
       content: "";
       position: absolute;
       inset: 0;
-      background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.12) 50%, transparent 70%);
+      background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.06) 50%, transparent 70%);
       background-size: 250% 100%;
-      animation: generated-image-sweep 2s ease-in-out infinite;
+      // goes across and then back again, so it never jumps back to the start
+      animation: generated-image-sweep 2.5s ease-in-out infinite alternate;
     }
   }
-  &__sparkle{
-    position: relative;
-    z-index: 1;
-    color: rgba(255, 255, 255, 0.85);
-    animation: generated-image-pulse 1.6s ease-in-out infinite;
-  }
-
   &__failed{
     margin-bottom: 12px;
     font-size: 0.9rem;
@@ -74,6 +68,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border: none;
     border-radius: 50%;
     color: white;
     background-color: rgba(0, 0, 0, 0.6);
@@ -85,16 +80,13 @@
   }
 }
 
-@keyframes generated-image-spin{
-  to{ transform: rotate(360deg); }
+@keyframes generated-image-breathe{
+  from{ opacity: .15; }
+  to{ opacity: .5; }
 }
 @keyframes generated-image-sweep{
   from{ background-position: 150% 0; }
   to{ background-position: -150% 0; }
-}
-@keyframes generated-image-pulse{
-  0%, 100%{ opacity: .4; transform: scale(.9); }
-  50%{ opacity: 1; transform: scale(1.1); }
 }
 @keyframes generated-image-in{
   from{ opacity: 0; }

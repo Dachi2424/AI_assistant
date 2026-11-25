@@ -1,7 +1,8 @@
 'use client'
 
 import React, { ReactNode, useState, useEffect, useRef, createContext, SetStateAction } from "react";
-import axios from "axios";
+import axios, { isAxiosError } from "axios";
+import { useRouter } from "next/navigation";
 import useGooglePopup from "@/app/hooks/useGooglePopup";
 import { describeAttachments } from "@/lib/attachments";
 import type { CreatedFile } from "@/lib/createdFiles";
@@ -30,7 +31,9 @@ export type MessageAttachment = {
   name: string,
   type: string,
   size: number,
-  previewUrl?: string
+  previewUrl?: string,
+  // a picture the AI just made: the placeholder it replaces on screen (see Message.pendingImages)
+  slot?: string
 }
 
 export type Message = {
@@ -48,6 +51,8 @@ export type Message = {
   files?: CreatedFile[],
   // the pictures the AI made in this answer. They are saved with the account and shown from the server
   images?: MessageAttachment[],
+  // pictures that are still being made, each shown as a placeholder until it comes
+  pendingImages?: string[],
   // a guest asked for something that needs Gmail, so they have to log in first
   needsLogin?: boolean,
   // the Gmail permission that request needs, asked for together with the login
@@ -94,6 +99,9 @@ type ChatContextType = {
   continueAsGuest: () => Promise<void>,
   messages: Message[],
   setMessages: React.Dispatch<SetStateAction<Message[]>>,
+  // Loads a saved conversation onto the screen and goes to the chat page, from wherever the user is (the sidebar's
+  // list, the library)
+  openConversation: (conversationId: string) => Promise<void>,
   conversationId: string | null,
   setConversationId: React.Dispatch<SetStateAction<string | null>>,
   showSidebar: boolean,
@@ -108,6 +116,7 @@ export const ChatContext = createContext<ChatContextType | null>(null)
 const GUEST_CHAT_KEY = "guestChat"
 
 export default function ChatProvider({children}: {children: ReactNode}) {
+  const router = useRouter()
   const [user, setUser] = useState<AppUser | null | undefined>(undefined)
   const [messages, setMessages] = useState<Message[]>([])
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -136,6 +145,34 @@ export default function ChatProvider({children}: {children: ReactNode}) {
     // several things can fail at once, so what is already waiting is kept unless the new one brings its own
     expiredActions.current = {...expiredActions.current, ...actions}
     setSessionExpired(true)
+  }
+
+  async function openConversation(convoId: string){
+    try{
+      const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
+      setMessages(res.data.conversations)
+      setConversationId(convoId)
+      router.push("/chat")
+    } catch(err){
+      if(isAxiosError(err) && err.status !== 401) return console.error(err)
+
+      try{
+        await axios.get("/api/auth/refresh")
+      } catch{
+        // the refresh token is gone too, so the user has to log in again, and then the conversation opens
+        expireSession({retry: () => openConversation(convoId)})
+        return
+      }
+
+      try{
+        const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
+        setMessages(res.data.conversations)
+        setConversationId(convoId)
+        router.push("/chat")
+      } catch(retryErr){
+        throw new Error(isAxiosError(retryErr)? retryErr.response?.data : "Failed to fetch conversation")
+      }
+    }
   }
 
   // "Continue as guest": the login is dropped and the screen starts over as a guest's
@@ -299,7 +336,7 @@ export default function ChatProvider({children}: {children: ReactNode}) {
   return (
     <ChatContext.Provider
       value={
-        {user, setUser, logIn, loginStatus: savingChat ? "saving" : waitingForLogin ? "waiting" : "idle", resumeReply, registerResume, sessionExpired, expireSession, continueAsGuest, messages, setMessages, conversationId, setConversationId, showSidebar, setShowSidebar, conversations, setConversations}}
+        {user, setUser, logIn, loginStatus: savingChat ? "saving" : waitingForLogin ? "waiting" : "idle", resumeReply, registerResume, sessionExpired, expireSession, continueAsGuest, messages, setMessages, openConversation, conversationId, setConversationId, showSidebar, setShowSidebar, conversations, setConversations}}
     >
       {children}
     </ChatContext.Provider>

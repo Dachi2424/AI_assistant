@@ -6,7 +6,7 @@ import axios, { isAxiosError } from "axios"
 import { ChevronDown, Search } from "lucide-react"
 
 export default function ConvoHistory() {
-  const {user, conversations, setConversations, setMessages, setConversationId, expireSession} = useChat()
+  const {user, conversations, setConversations, openConversation, expireSession} = useChat()
   const [loadingConvos, setLoadingConvos] = useState<boolean>(false)
 
   async function getConversations(){
@@ -47,32 +47,6 @@ export default function ConvoHistory() {
   }, [user])
 
 
-  async function handleLoadConvo(convoId: string){
-    try{
-      const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
-      setMessages(res.data.conversations)
-      setConversationId(convoId)
-    } catch(err){
-      if(isAxiosError(err) && err.status !== 401) return console.error(err)
-
-      try{
-        await axios.get("/api/auth/refresh")
-      } catch{
-        // the refresh token is gone too, so the user has to log in again, and then the conversation opens
-        expireSession({retry: () => handleLoadConvo(convoId)})
-        return
-      }
-
-      try{
-        const res = await axios.get("/api/conversation", {params: {conversationId: convoId, skip: 0}})
-        setMessages(res.data.conversations)
-        setConversationId(convoId)
-      } catch(retryErr){
-        throw new Error(isAxiosError(retryErr)? retryErr.response?.data : "Failed to fetch conversation")
-      }
-    }
-  }
-
   return (
     <div className="history">
       <div className="history__upper-container">
@@ -88,7 +62,7 @@ export default function ConvoHistory() {
             className="history__list"
             key={convo._id}
             title={convo.title}
-            onClick={() => handleLoadConvo(convo._id)}
+            onClick={() => openConversation(convo._id)}
           >{convo.title || "Untitled"}</li>
         ))}
       </ul>

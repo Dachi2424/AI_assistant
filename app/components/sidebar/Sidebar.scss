@@ -20,6 +20,15 @@
     gap: 6px;
   }
 
+  // same look as New Chat, right under it
+  &__library-button{
+    margin-top: 14px;
+    opacity: .85;
+    &:hover, &--active{
+      opacity: 1;
+    }
+  }
+
   // the logged in user, at the bottom under the conversation titles
   &__profile{
     flex-shrink: 0;

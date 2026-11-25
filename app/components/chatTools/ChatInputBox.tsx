@@ -280,8 +280,17 @@ export default function ChatInputBox() {
         updateStreamingMessage(message => ({...message, content: message.content + event.text}))
       } else if(event.type === "draft"){
         updateStreamingMessage(message => ({...message, drafts: [...(message.drafts ?? []), event.draft]}))
+      } else if(event.type === "imagePending"){
+        updateStreamingMessage(message => ({...message, pendingImages: [...(message.pendingImages ?? []), event.slot]}))
       } else if(event.type === "image"){
-        updateStreamingMessage(message => ({...message, images: [...(message.images ?? []), event.image]}))
+        // the picture takes the place of its placeholder
+        updateStreamingMessage(message => ({
+          ...message,
+          pendingImages: message.pendingImages?.filter(slot => slot !== event.image.slot),
+          images: [...(message.images ?? []), event.image]
+        }))
+      } else if(event.type === "imageFailed"){
+        updateStreamingMessage(message => ({...message, pendingImages: message.pendingImages?.filter(slot => slot !== event.slot)}))
       } else if(event.type === "limit"){
         // the user used up their pictures: a popup says when they can make more
         setLimitError("")
@@ -314,7 +323,8 @@ export default function ChatInputBox() {
       console.error(err)
       handleEvent({ type: "error", error: "Connection lost" })
     } finally{
-      updateStreamingMessage(message => ({...message, streaming: false}))
+      // a picture that never came (the connection broke) shouldn't stay a placeholder forever
+      updateStreamingMessage(message => ({...message, streaming: false, pendingImages: undefined}))
     }
   }
 

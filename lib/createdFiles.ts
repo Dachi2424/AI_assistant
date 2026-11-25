@@ -1,6 +1,8 @@
 // The files the AI creates for the user to download (the createFile tool). Used by the server, which checks them, and
 // by the browser, which shows them. They are text, so they are kept as text and the browser builds the download itself.
 
+import { saveFile } from "@/lib/saveFile"
+
 export type CreatedFile = { name: string, type: string, content: string }
 
 export const MAX_CREATED_FILE_BYTES = 100 * 1024
@@ -28,6 +30,12 @@ const FILE_TYPES: Record<string, string> = {
 }
 
 export const CREATED_FILE_EXTENSIONS = Object.keys(FILE_TYPES)
+
+// Saves a created file on the user's computer, asking where to put it when the browser can. The content is already in
+// the browser, so the file is made here from it. Only works in the browser.
+export function downloadCreatedFile(file: CreatedFile){
+  return saveFile(new Blob([file.content], {type: `${file.type};charset=utf-8`}), file.name, file.type)
+}
 
 // Checks what the AI (or a browser, for a guest's chat) gave as a file. Gives back the file, or what is wrong with it,
 // which is told to the AI so that it can try again.

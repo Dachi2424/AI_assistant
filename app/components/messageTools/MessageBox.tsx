@@ -75,11 +75,17 @@ export default function MessageBox() {
           <Fragment key={i}>
             <SystemMessage
               content={message.content}
-              loading={message.streaming && !message.content}
+              // a picture being made has its own placeholder, so the dots aren't needed too
+              loading={message.streaming && !message.content && !message.pendingImages?.length}
               animate={message.isNew}
               onGrow={followText}
             />
-            {message.images?.map(image => <GeneratedImage key={image.id} image={image} />)}
+            {/* The pictures, then the ones still being made. A picture keeps the key of its placeholder and they are in
+                one list, so the same square stays on screen until the picture is shown instead of starting over */}
+            {[
+              ...(message.images ?? []).map(image => ({ key: image.slot ?? image.id ?? image.name, image })),
+              ...(message.pendingImages ?? []).map(slot => ({ key: slot, image: undefined }))
+            ].map(item => <GeneratedImage key={item.key} image={item.image} />)}
             {message.files?.map((file, fileIndex) => <FileCard key={fileIndex} file={file} />)}
             {message.needsLogin && !user && (
               <div className="messagebox__reconnect">

@@ -7,7 +7,10 @@ export type StreamEvent =
   | { type: "text", text: string }
   | { type: "draft", draft: { id: string, to: string, subject: string, body: string, needsPermission: boolean } }
   | { type: "file", file: CreatedFile }
-  | { type: "image", image: { id: string, name: string, type: string, size: number } }
+  // a picture is being made; a placeholder stands in its `slot` until the picture comes or doesn't
+  | { type: "imagePending", slot: string }
+  | { type: "image", image: { id: string, name: string, type: string, size: number, slot: string } }
+  | { type: "imageFailed", slot: string }
   // the user has used up their pictures; the page tells them when they can make more
   | { type: "limit", resetsAt: string | null }
   | { type: "login", app: string, action: string }

@@ -12,6 +12,7 @@ import { filesLeft, recordFiles } from "@/lib/fileQuota";
 import { budgetState, createMeter } from "@/lib/usageBudget";
 import { CREATED_FILE_EXTENSIONS, MAX_CREATED_FILES, MAX_CREATED_FILE_BYTES, cleanCreatedFile, type CreatedFile } from "@/lib/createdFiles";
 import { IMAGE_COST_CENTS, imageQuota, recordImage } from "@/lib/imageQuota";
+import { randomUUID } from "node:crypto";
 
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
@@ -407,36 +408,42 @@ async function generateWithTools(userId: ObjectId | null, conversationId: Object
       return { error: `There is no picture named ${source.missing.map(name => `"${name}"`).join(", ")} in this conversation. Use the exact file names, or ask the user to attach the picture.` }
     }
 
-    let response
+    // From here the picture is being made, which takes a few seconds: the page shows a placeholder in its place until
+    // the picture comes (the `image` event with the same slot) or doesn't (`imageFailed`)
+    const slot = randomUUID()
+    send({ type: "imagePending", slot })
+
     try {
-      response = await ai.models.generateContent({
+      const response = await ai.models.generateContent({
         model: IMAGE_MODEL,
         contents: [{ role: "user", parts: [{ text: prompt }, ...source.parts] }],
         config: { responseModalities: ["TEXT", "IMAGE"] }
       })
+
+      const picture = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data)?.inlineData
+      if (!picture?.data) {
+        console.log("[generateImage] no picture came back:", response.text ?? response.candidates?.[0]?.finishReason)
+        send({ type: "imageFailed", slot })
+        return { error: "No picture was made, probably because the request isn't allowed. Tell the user, and offer to try a different description." }
+      }
+
+      // it was made, so it counts, in the picture limit and in the cents budget
+      meter.addCents(IMAGE_COST_CENTS)
+      await recordImage(userId)
+
+      const type = picture.mimeType && IMAGE_EXTENSIONS[picture.mimeType] ? picture.mimeType : "image/png"
+      const base = String(args.name ?? "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "image"
+      const saved = await saveAttachment(db, userId, { name: `${base}.${IMAGE_EXTENSIONS[type]}`, type, bytes: Buffer.from(picture.data, "base64") })
+
+      images.push(saved)
+      console.log("[generateImage] made", saved.name)
+      send({ type: "image", image: { id: saved.id.toString(), name: saved.name, type: saved.type, size: saved.size, slot } })
+      return { status: "created", name: saved.name, note: "The user sees the picture under your answer. Do not describe how to download it." }
     } catch (err) {
       console.error(err)
+      send({ type: "imageFailed", slot })
       return { error: "The picture couldn't be made. Tell the user to try again." }
     }
-
-    const picture = response.candidates?.[0]?.content?.parts?.find(part => part.inlineData?.data)?.inlineData
-    if (!picture?.data) {
-      console.log("[generateImage] no picture came back:", response.text ?? response.candidates?.[0]?.finishReason)
-      return { error: "No picture was made, probably because the request isn't allowed. Tell the user, and offer to try a different description." }
-    }
-
-    // it was made, so it counts, in the picture limit and in the cents budget
-    meter.addCents(IMAGE_COST_CENTS)
-    await recordImage(userId)
-
-    const type = picture.mimeType && IMAGE_EXTENSIONS[picture.mimeType] ? picture.mimeType : "image/png"
-    const base = String(args.name ?? "").toLowerCase().replace(/[^a-z0-9_-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "image"
-    const saved = await saveAttachment(db, userId, { name: `${base}.${IMAGE_EXTENSIONS[type]}`, type, bytes: Buffer.from(picture.data, "base64") })
-
-    images.push(saved)
-    console.log("[generateImage] made", saved.name)
-    send({ type: "image", image: { id: saved.id.toString(), name: saved.name, type: saved.type, size: saved.size } })
-    return { status: "created", name: saved.name, note: "The user sees the picture under your answer. Do not describe how to download it." }
   }
 
   function sendText(text: string) {

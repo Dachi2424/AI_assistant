@@ -4,10 +4,13 @@ import axios from "axios"
 import ConvoHistory from "./ConvoHistory"
 import "./Sidebar.scss"
 import useChat from "@/app/context/useChat"
-import { ChevronDown, LogOut, Plus } from "lucide-react"
+import { ChevronDown, Library, LogOut, Plus } from "lucide-react"
+import { usePathname, useRouter } from "next/navigation"
 
 export default function Sidebar() {
   const {user, setUser, messages, showSidebar, setMessages, setConversationId, setConversations, logIn} = useChat()
+  const router = useRouter()
+  const pathname = usePathname()
   const [askToSave, setAskToSave] = useState<boolean>(false)
   const [error, setError] = useState<string>("")
   const [menuOpen, setMenuOpen] = useState<boolean>(false)
@@ -36,6 +39,8 @@ export default function Sidebar() {
   function startNewChat(){
     setMessages([])
     setConversationId(null)
+    // from the library, the empty chat is on another page
+    if(pathname !== "/chat") router.push("/chat")
   }
 
   function handleNewChat(){
@@ -82,6 +87,16 @@ export default function Sidebar() {
         <Plus size={20}/>
         <span className="sidebar__new-chat-text">New Chat</span>
       </span>
+      {/* the pictures and files the AI made for this account; a guest has none */}
+      {user && (
+        <span
+          className={`sidebar__new-chat-button sidebar__library-button ${pathname === "/library" ? "sidebar__library-button--active" : ""}`}
+          onClick={() => router.push("/library")}
+        >
+          <Library size={20}/>
+          <span className="sidebar__new-chat-text">Library</span>
+        </span>
+      )}
       <ConvoHistory />
 
       {user && (
